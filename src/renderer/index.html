@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media converter</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <h1>Media converter</h1>
+
+      <section class="panel">
+        <button id="select-file-button" type="button">Select a media file</button>
+        <p id="selected-file-path">No file selected.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Detected codecs</h2>
+        <ul id="media-details">
+          <li>Select a file to inspect its audio and video codecs.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Target bitrates</h2>
+        <div class="field-grid">
+          <label>
+            Audio bitrate (kbps)
+            <input id="audio-bitrate" type="number" min="32" step="1" disabled />
+          </label>
+          <label>
+            Video bitrate (kbps)
+            <input id="video-bitrate" type="number" min="128" step="1" disabled />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="start-conversion-button" type="button" disabled>Start conversion</button>
+          <button id="abort-conversion-button" type="button" disabled>Abort conversion</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Conversion progress</h2>
+        <progress id="conversion-progress" max="100" value="0"></progress>
+        <p id="conversion-status">Waiting for a file.</p>
+        <ul id="conversion-outputs"></ul>
+      </section>
+    </main>
+  </body>
+</html>

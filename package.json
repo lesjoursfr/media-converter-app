@@ -1,0 +1,28 @@
+{
+  "name": "media-converter-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Electron application to convert audio & video files with ffmpeg",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
+    "check-tsc": "tsc -p tsconfig.json --noEmit",
+    "start": "npm run build && electron .",
+    "test": "npm run build && node --test test/**/*.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lesjoursfr/media-converter-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lesjoursfr/media-converter-app/issues"
+  },
+  "homepage": "https://github.com/lesjoursfr/media-converter-app#readme",
+  "devDependencies": {
+    "electron": "39.8.1",
+    "typescript": "6.0.3"
+  }
+}
