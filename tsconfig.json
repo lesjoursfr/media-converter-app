@@ -16,6 +16,6 @@
 		"rootDir": ".",
 		"types": ["node"]
 	},
-	"include": ["src/**/*", "forge.config.ts"],
-	"exclude": ["node_modules", "**/*.spec.ts"]
+	"include": ["src/**/*", "tests/**/*", "forge.config.ts"],
+	"exclude": ["node_modules"]
 }
