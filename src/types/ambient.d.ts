@@ -26,11 +26,14 @@ declare module "electron" {
   };
 
   export const ipcMain: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handle(channel: string, listener: (event: unknown, ...args: Array<any>) => unknown): void;
   };
 
   export const ipcRenderer: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     invoke(channel: string, ...args: Array<any>): Promise<any>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     on(channel: string, listener: (event: unknown, payload: any) => void): void;
   };
 
@@ -43,6 +46,7 @@ declare module "node:child_process" {
   export type ChildProcessWithoutNullStreams = {
     currentProcess?: unknown;
     kill(signal?: string): boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     on(event: string, listener: (...args: Array<any>) => void): void;
     stderr: {
       on(event: "data", listener: (chunk: unknown) => void): void;

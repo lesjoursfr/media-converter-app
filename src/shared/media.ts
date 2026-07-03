@@ -41,7 +41,14 @@ export type ConversionJob = {
 export type ConversionEvent =
   | { percent: number; type: "started" }
   | { jobIndex: number; outputPath: string; totalJobs: number; type: "job-started" }
-  | { currentJobPercent: number; jobIndex: number; outputPath: string; percent: number; totalJobs: number; type: "progress" }
+  | {
+      currentJobPercent: number;
+      jobIndex: number;
+      outputPath: string;
+      percent: number;
+      totalJobs: number;
+      type: "progress";
+    }
   | { outputPaths: Array<string>; percent: number; type: "completed" }
   | { percent: number; type: "aborted" }
   | { message: string; percent: number; type: "error" };
@@ -230,11 +237,33 @@ function createVideoArgs(
   }
 
   if (format === "mp4") {
-    args.push("-c:a", "aac", "-b:a", `${audioBitrateKbps}k`, "-ac", "2", "-aac_coder", "twoloop", "-profile:a", "aac_low");
+    args.push(
+      "-c:a",
+      "aac",
+      "-b:a",
+      `${audioBitrateKbps}k`,
+      "-ac",
+      "2",
+      "-aac_coder",
+      "twoloop",
+      "-profile:a",
+      "aac_low"
+    );
     return args;
   }
 
-  args.push("-c:a", "libopus", "-b:a", `${audioBitrateKbps}k`, "-ac", "2", "-vbr", "constrained", "-compression_level", "10");
+  args.push(
+    "-c:a",
+    "libopus",
+    "-b:a",
+    `${audioBitrateKbps}k`,
+    "-ac",
+    "2",
+    "-vbr",
+    "constrained",
+    "-compression_level",
+    "10"
+  );
   return args;
 }
 
@@ -268,7 +297,7 @@ export function parseProbeOutput(filePath: string, rawProbeOutput: string): Medi
     kind: videoStream === undefined ? "audio" : "video",
     path: filePath,
     suggestedAudioBitrateKbps: audioBitrateKbps ?? DEFAULT_AUDIO_BITRATE_KBPS,
-    suggestedVideoBitrateKbps: videoStream === undefined ? 0 : videoBitrateKbps ?? DEFAULT_VIDEO_BITRATE_KBPS,
+    suggestedVideoBitrateKbps: videoStream === undefined ? 0 : (videoBitrateKbps ?? DEFAULT_VIDEO_BITRATE_KBPS),
     video:
       videoStream === undefined
         ? null

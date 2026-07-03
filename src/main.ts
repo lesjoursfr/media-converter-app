@@ -248,7 +248,22 @@ ipcMain.handle("media:select-file", async () => {
     filters: [
       {
         name: "Media files",
-        extensions: ["aac", "avi", "m4a", "mkv", "mov", "mp3", "mp4", "mts", "m2ts", "oga", "ogg", "wav", "weba", "webm"],
+        extensions: [
+          "aac",
+          "avi",
+          "m4a",
+          "mkv",
+          "mov",
+          "mp3",
+          "mp4",
+          "mts",
+          "m2ts",
+          "oga",
+          "ogg",
+          "wav",
+          "weba",
+          "webm",
+        ],
       },
     ],
   });
