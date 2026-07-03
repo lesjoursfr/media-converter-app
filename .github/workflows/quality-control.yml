@@ -38,3 +38,6 @@ jobs:
 
       - name: TSC checks
         run: npm run check-tsc
+
+      - name: Run tests
+        run: npm run test

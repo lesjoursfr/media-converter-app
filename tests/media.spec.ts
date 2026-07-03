@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildConversionJobs, parseProbeOutput } from "../dist/shared/media.js";
+import { buildConversionJobs, parseProbeOutput } from "../src/shared/media";
 
 test("parseProbeOutput detects audio-only files and default outputs", () => {
   const mediaInfo = parseProbeOutput(
