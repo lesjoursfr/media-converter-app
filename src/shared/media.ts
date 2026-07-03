@@ -132,8 +132,10 @@ function formatFrameRate(value: string | undefined) {
   return value;
 }
 
-function replaceExtension(filePath: string, extension: string) {
-  return /\.[^./\\]+$/u.test(filePath) ? filePath.replace(/\.[^./\\]+$/u, `.${extension}`) : `${filePath}.${extension}`;
+function replaceExtension(filePath: string, extension: string, timestamp: number): string {
+  return /\.[^./\\]+$/u.test(filePath)
+    ? filePath.replace(/\.[^./\\]+$/u, `-${timestamp}.${extension}`)
+    : `${filePath}-${timestamp}.${extension}`;
 }
 
 function createAudioOnlyArgs(audioBitrateKbps: number, format: "m4a" | "weba") {
@@ -312,15 +314,17 @@ export function parseProbeOutput(filePath: string, rawProbeOutput: string): Medi
 }
 
 export function buildConversionJobs(request: ConversionRequest): Array<ConversionJob> {
+  const timestamp = Date.now();
+
   if (request.mediaInfo.kind === "audio") {
     return [
       {
         args: createAudioOnlyArgs(request.audioBitrateKbps, "m4a"),
-        outputPath: replaceExtension(request.inputPath, "m4a"),
+        outputPath: replaceExtension(request.inputPath, "m4a", timestamp),
       },
       {
         args: createAudioOnlyArgs(request.audioBitrateKbps, "weba"),
-        outputPath: replaceExtension(request.inputPath, "weba"),
+        outputPath: replaceExtension(request.inputPath, "weba", timestamp),
       },
     ];
   }
@@ -328,11 +332,11 @@ export function buildConversionJobs(request: ConversionRequest): Array<Conversio
   return [
     {
       args: createVideoArgs(request.mediaInfo, request.audioBitrateKbps, request.videoBitrateKbps, "mp4"),
-      outputPath: replaceExtension(request.inputPath, "mp4"),
+      outputPath: replaceExtension(request.inputPath, "mp4", timestamp),
     },
     {
       args: createVideoArgs(request.mediaInfo, request.audioBitrateKbps, request.videoBitrateKbps, "webm"),
-      outputPath: replaceExtension(request.inputPath, "webm"),
+      outputPath: replaceExtension(request.inputPath, "webm", timestamp),
     },
   ];
 }

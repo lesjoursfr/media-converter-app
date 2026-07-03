@@ -1,3 +1,5 @@
+[![QC Checks](https://github.com/lesjoursfr/media-converter-app/actions/workflows/quality-control.yml/badge.svg)](https://github.com/lesjoursfr/media-converter-app/actions/workflows/quality-control.yml)
+
 # media-converter-app
 
 Electron application to convert audio and video files with ffmpeg.
@@ -16,7 +18,6 @@ Electron application to convert audio and video files with ffmpeg.
 
 - `ffmpeg`
 - `ffprobe`
-- npm dependencies installed locally
 
 ## Development
 
