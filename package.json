@@ -59,7 +59,7 @@
 		"eslint-config-prettier": "10.1.8",
 		"globals": "17.7.0",
 		"mocha": "11.7.6",
-		"prettier": "3.9.4",
+		"prettier": "3.9.5",
 		"ts-node": "10.9.2",
 		"typescript": "6.0.3",
 		"typescript-eslint": "8.63.0"
@@ -72,5 +72,5 @@
 	"resolutions": {
 		"extract-zip": "npm:@electron-internal/extract-zip@1.0.4"
 	},
-	"packageManager": "yarn@4.17.0"
+	"packageManager": "yarn@4.17.1"
 }
