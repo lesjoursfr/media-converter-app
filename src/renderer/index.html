@@ -18,6 +18,18 @@
       </h1>
 
       <section class="panel">
+        <h2>FFmpeg tools</h2>
+        <ul id="tooling-status-list">
+          <li>Checking installed versions…</li>
+        </ul>
+        <p id="tooling-error" hidden>FFmpeg and FFprobe are required.</p>
+        <div class="tooling-actions">
+          <button id="refresh-tooling-button" type="button">Refresh tool status</button>
+        </div>
+        <button id="tooling-help-link" type="button" class="link-button" hidden>See installation instructions</button>
+      </section>
+
+      <section class="panel">
         <button id="select-file-button" type="button">Select a media file</button>
         <p id="selected-file-path">No file selected.</p>
       </section>
@@ -55,5 +67,13 @@
         <ul id="conversion-outputs"></ul>
       </section>
     </main>
+
+    <dialog id="tooling-help-dialog">
+      <article class="dialog-content">
+        <h2 id="tooling-help-title">Install FFmpeg and FFprobe</h2>
+        <pre id="tooling-help-content"></pre>
+        <button id="close-tooling-help-button" type="button">Close</button>
+      </article>
+    </dialog>
   </body>
 </html>

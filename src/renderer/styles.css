@@ -74,3 +74,50 @@ ul {
   margin-bottom: 0;
   padding-left: 20px;
 }
+
+.tooling-actions {
+  margin: 12px 0;
+}
+
+#refresh-tooling-button {
+  max-width: 220px;
+}
+
+.link-button {
+  background: transparent;
+  border: 0;
+  color: #0a58ca;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
+#tooling-error {
+  color: #9b1c1c;
+  font-weight: 600;
+}
+
+#tooling-help-dialog {
+  border: 0;
+  border-radius: 12px;
+  max-width: 760px;
+  padding: 0;
+  width: calc(100% - 32px);
+}
+
+#tooling-help-dialog::backdrop {
+  background: rgb(0 0 0 / 35%);
+}
+
+.dialog-content {
+  padding: 20px;
+}
+
+#tooling-help-content {
+  background: #f7f7f8;
+  border-radius: 8px;
+  overflow-x: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}

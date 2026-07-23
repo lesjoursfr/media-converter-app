@@ -53,6 +53,28 @@ export type ConversionEvent =
   | { percent: number; type: "aborted" }
   | { message: string; percent: number; type: "error" };
 
+export type HostOs = "macos" | "linux" | "windows" | "unknown";
+
+export type ToolBinaryName = "ffmpeg" | "ffprobe";
+
+export type ToolBinaryStatus = {
+  available: boolean;
+  error: string | null;
+  meetsMinimum: boolean;
+  name: ToolBinaryName;
+  version: string | null;
+};
+
+export type ToolingStatus = {
+  allMeetMinimum: boolean;
+  ffmpeg: ToolBinaryStatus;
+  ffprobe: ToolBinaryStatus;
+  minimumRequiredVersion: string;
+  os: HostOs;
+};
+
+export const MINIMUM_REQUIRED_TOOL_VERSION = "6.1.1";
+
 type ProbeStream = {
   avg_frame_rate?: string;
   bit_rate?: string;
@@ -79,6 +101,65 @@ type ProbeOutput = {
 
 const DEFAULT_AUDIO_BITRATE_KBPS = 256;
 const DEFAULT_VIDEO_BITRATE_KBPS = 4000;
+
+function parseVersionParts(version: string) {
+  const match = version.match(/^(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?$/u);
+
+  if (match?.groups === undefined) {
+    return null;
+  }
+
+  return {
+    major: Number(match.groups.major),
+    minor: Number(match.groups.minor),
+    patch: Number(match.groups.patch ?? "0"),
+  };
+}
+
+export function compareToolVersions(left: string, right: string) {
+  const leftParts = parseVersionParts(left);
+  const rightParts = parseVersionParts(right);
+
+  if (leftParts === null || rightParts === null) {
+    return null;
+  }
+
+  if (leftParts.major !== rightParts.major) {
+    return leftParts.major > rightParts.major ? 1 : -1;
+  }
+
+  if (leftParts.minor !== rightParts.minor) {
+    return leftParts.minor > rightParts.minor ? 1 : -1;
+  }
+
+  if (leftParts.patch !== rightParts.patch) {
+    return leftParts.patch > rightParts.patch ? 1 : -1;
+  }
+
+  return 0;
+}
+
+export function extractVersionFromBanner(toolName: ToolBinaryName, output: string) {
+  const line = output.split(/\r?\n/u).find((candidate) => candidate.startsWith(`${toolName} version `));
+
+  if (line === undefined) {
+    return null;
+  }
+
+  const token = line.split(/\s+/u)[2];
+
+  if (token === undefined) {
+    return null;
+  }
+
+  const match = token.match(/(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?/u);
+
+  if (match?.groups === undefined) {
+    return null;
+  }
+
+  return `${match.groups.major}.${match.groups.minor}.${match.groups.patch ?? "0"}`;
+}
 
 function parseNumber(value: number | string | null | undefined) {
   if (typeof value === "number") {

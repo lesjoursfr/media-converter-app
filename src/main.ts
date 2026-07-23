@@ -3,11 +3,18 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { join } from "node:path";
 import {
   buildConversionJobs,
+  compareToolVersions,
+  extractVersionFromBanner,
+  MINIMUM_REQUIRED_TOOL_VERSION,
   parseProbeOutput,
   type ConversionEvent,
   type ConversionJob,
   type ConversionRequest,
+  type HostOs,
   type MediaInfo,
+  type ToolBinaryName,
+  type ToolBinaryStatus,
+  type ToolingStatus,
 } from "./shared/media";
 
 type ConversionController = {
@@ -17,6 +24,104 @@ type ConversionController = {
 
 let mainWindow: BrowserWindow | null = null;
 let currentConversion: ConversionController | null = null;
+
+function resolveHostOs(): HostOs {
+  if (process.platform === "darwin") {
+    return "macos";
+  }
+
+  if (process.platform === "linux") {
+    return "linux";
+  }
+
+  if (process.platform === "win32") {
+    return "windows";
+  }
+
+  return "unknown";
+}
+
+async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus> {
+  try {
+    const banner = await collectCommandOutput(name, ["-version"]);
+    const version = extractVersionFromBanner(name, banner);
+
+    if (version === null) {
+      return {
+        available: true,
+        error: `Unable to parse the ${name} version.`,
+        meetsMinimum: false,
+        name,
+        version: null,
+      };
+    }
+
+    const comparison = compareToolVersions(version, MINIMUM_REQUIRED_TOOL_VERSION);
+
+    if (comparison === null) {
+      return {
+        available: true,
+        error: `Detected an invalid ${name} version string (${version}).`,
+        meetsMinimum: false,
+        name,
+        version,
+      };
+    }
+
+    if (comparison < 0) {
+      return {
+        available: true,
+        error: `${name} ${version} is too old. Minimum required is ${MINIMUM_REQUIRED_TOOL_VERSION}.`,
+        meetsMinimum: false,
+        name,
+        version,
+      };
+    }
+
+    return {
+      available: true,
+      error: null,
+      meetsMinimum: true,
+      name,
+      version,
+    };
+  } catch (error) {
+    return {
+      available: false,
+      error: error instanceof Error ? error.message : `Unable to run ${name}.`,
+      meetsMinimum: false,
+      name,
+      version: null,
+    };
+  }
+}
+
+async function getToolingStatus(): Promise<ToolingStatus> {
+  const [ffmpeg, ffprobe] = await Promise.all([detectToolStatus("ffmpeg"), detectToolStatus("ffprobe")]);
+
+  return {
+    allMeetMinimum: ffmpeg.meetsMinimum && ffprobe.meetsMinimum,
+    ffmpeg,
+    ffprobe,
+    minimumRequiredVersion: MINIMUM_REQUIRED_TOOL_VERSION,
+    os: resolveHostOs(),
+  };
+}
+
+function assertToolingReady(toolingStatus: ToolingStatus) {
+  if (toolingStatus.allMeetMinimum) {
+    return;
+  }
+
+  const issues = [toolingStatus.ffmpeg, toolingStatus.ffprobe]
+    .filter((tool) => !tool.meetsMinimum)
+    .map((tool) => `${tool.name}: ${tool.error ?? "not available"}`)
+    .join("; ");
+
+  throw new Error(
+    `FFmpeg and FFprobe ${MINIMUM_REQUIRED_TOOL_VERSION}+ are required before converting files. ${issues}`
+  );
+}
 
 function sendConversionEvent(event: ConversionEvent) {
   mainWindow?.webContents.send("media:conversion-event", event);
@@ -253,6 +358,9 @@ ipcMain.handle("media:select-file", async () => {
     return null;
   }
 
+  const toolingStatus = await getToolingStatus();
+  assertToolingReady(toolingStatus);
+
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ["openFile"],
     filters: [
@@ -285,10 +393,17 @@ ipcMain.handle("media:select-file", async () => {
   return probeMedia(result.filePaths[0]);
 });
 
+ipcMain.handle("media:get-tooling-status", async () => {
+  return getToolingStatus();
+});
+
 ipcMain.handle("media:start-conversion", async (_event, request: ConversionRequest) => {
   if (currentConversion !== null) {
     throw new Error("A conversion is already in progress.");
   }
+
+  const toolingStatus = await getToolingStatus();
+  assertToolingReady(toolingStatus);
 
   currentConversion = {
     aborted: false,

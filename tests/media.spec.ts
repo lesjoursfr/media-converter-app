@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildConversionJobs, parseProbeOutput } from "../src/shared/media";
+import {
+  buildConversionJobs,
+  compareToolVersions,
+  extractVersionFromBanner,
+  parseProbeOutput,
+} from "../src/shared/media";
 
 test("parseProbeOutput detects audio-only files and default outputs", () => {
   const mediaInfo = parseProbeOutput(
@@ -34,10 +39,9 @@ test("parseProbeOutput detects audio-only files and default outputs", () => {
     videoBitrateKbps: mediaInfo.suggestedVideoBitrateKbps,
   });
 
-  assert.deepEqual(
-    jobs.map((job) => job.outputPath),
-    ["/tmp/example.m4a", "/tmp/example.weba"]
-  );
+  assert.equal(jobs.length, 2);
+  assert.match(jobs[0]?.outputPath ?? "", /^\/tmp\/example-\d+\.m4a$/u);
+  assert.match(jobs[1]?.outputPath ?? "", /^\/tmp\/example-\d+\.weba$/u);
   assert.ok(jobs[0]?.args.includes("aac"));
   assert.ok(jobs[1]?.args.includes("libopus"));
 });
@@ -82,10 +86,27 @@ test("parseProbeOutput detects video files and matching target bitrates", () => 
     videoBitrateKbps: mediaInfo.suggestedVideoBitrateKbps,
   });
 
-  assert.deepEqual(
-    jobs.map((job) => job.outputPath),
-    ["/tmp/example.mp4", "/tmp/example.webm"]
-  );
+  assert.equal(jobs.length, 2);
+  assert.match(jobs[0]?.outputPath ?? "", /^\/tmp\/example-\d+\.mp4$/u);
+  assert.match(jobs[1]?.outputPath ?? "", /^\/tmp\/example-\d+\.webm$/u);
   assert.ok(jobs[0]?.args.includes("libx264"));
   assert.ok(jobs[1]?.args.includes("libvpx-vp9"));
+});
+
+test("extractVersionFromBanner parses FFmpeg and FFprobe version banners", () => {
+  const ffmpegVersion = extractVersionFromBanner(
+    "ffmpeg",
+    "ffmpeg version n6.1.1 Copyright (c) the FFmpeg developers\nconfiguration: --enable-gpl"
+  );
+  const ffprobeVersion = extractVersionFromBanner("ffprobe", "ffprobe version 7.0.2-0ubuntu1 built with gcc 13");
+
+  assert.equal(ffmpegVersion, "6.1.1");
+  assert.equal(ffprobeVersion, "7.0.2");
+});
+
+test("compareToolVersions compares versions including missing patch numbers", () => {
+  assert.equal(compareToolVersions("6.1", "6.1.1"), -1);
+  assert.equal(compareToolVersions("6.1.1", "6.1"), 1);
+  assert.equal(compareToolVersions("6.1.1", "6.1.1"), 0);
+  assert.equal(compareToolVersions("6.2.0", "6.1.9"), 1);
 });
