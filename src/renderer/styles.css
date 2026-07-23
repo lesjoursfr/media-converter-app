@@ -15,6 +15,18 @@ body {
   padding: 24px;
 }
 
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-title-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
 .panel {
   background: #fff;
   border-radius: 10px;
