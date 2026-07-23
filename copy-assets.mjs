@@ -1,10 +1,11 @@
-import { copyFile, mkdir } from "node:fs/promises";
+import { cp } from "node:fs/promises";
 import { join } from "node:path";
 
 const root = process.cwd();
-const sourceDirectory = join(root, "src", "renderer");
-const targetDirectory = join(root, "dist", "renderer");
+const rendererSourceDirectory = join(root, "src", "renderer");
+const rendererTargetDirectory = join(root, "dist", "renderer");
+const iconsSourceDirectory = join(root, "src", "icons");
+const iconsTargetDirectory = join(root, "dist", "icons");
 
-await mkdir(targetDirectory, { recursive: true });
-await copyFile(join(sourceDirectory, "index.html"), join(targetDirectory, "index.html"));
-await copyFile(join(sourceDirectory, "styles.css"), join(targetDirectory, "styles.css"));
+await cp(rendererSourceDirectory, rendererTargetDirectory, { recursive: true });
+await cp(iconsSourceDirectory, iconsTargetDirectory, { recursive: true });

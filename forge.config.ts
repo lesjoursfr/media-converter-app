@@ -9,18 +9,27 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    icon:
+      process.platform === "win32"
+        ? "src/icons/windows/icon.ico"
+        : process.platform === "darwin"
+          ? "src/icons/macos/icon.icns"
+          : undefined,
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel(
       {
         authors: "Electron contributors",
+        iconUrl:
+          "https://raw.githubusercontent.com/lesjoursfr/media-converter-app/refs/heads/main/src/icons/windows/icon.ico",
+        setupIcon: "src/icons/windows/icon.ico",
       },
       ["win32"]
     ),
     new MakerZIP({}, ["darwin"]),
-    new MakerDeb({}, ["linux"]),
-    new MakerRpm({}, ["linux"]),
+    new MakerDeb({ options: { icon: "src/icons/linux/icons/512x512.png" } }, ["linux"]),
+    new MakerRpm({ options: { icon: "src/icons/linux/icons/512x512.png" } }, ["linux"]),
   ],
   plugins: [
     {

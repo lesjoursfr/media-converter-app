@@ -33,6 +33,16 @@ function createWindow() {
     },
   });
 
+  // Windows
+  if (process.platform === "win32") {
+    mainWindow.setIcon(join(app.getAppPath(), "dist", "/icons/windows/icon.ico"));
+  }
+
+  // Linux
+  if (process.platform === "linux") {
+    mainWindow.setIcon(join(app.getAppPath(), "dist", "/icons/linux/icons/512x512.png"));
+  }
+
   void mainWindow.loadFile(join(app.getAppPath(), "dist", "renderer", "index.html"));
 }
 
