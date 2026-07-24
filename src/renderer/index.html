@@ -18,14 +18,16 @@
       </h1>
 
       <section class="panel">
-        <h2>FFmpeg tools</h2>
+        <div class="tooling-panel-title">
+          <h2>FFmpeg tools</h2>
+          <div class="tooling-actions">
+            <button id="refresh-tooling-button" type="button">⟳</button>
+          </div>
+        </div>
         <ul id="tooling-status-list">
           <li>Checking installed versions…</li>
         </ul>
         <p id="tooling-error" hidden>FFmpeg and FFprobe are required.</p>
-        <div class="tooling-actions">
-          <button id="refresh-tooling-button" type="button">Refresh tool status</button>
-        </div>
         <button id="tooling-help-link" type="button" class="link-button" hidden>See installation instructions</button>
       </section>
 
