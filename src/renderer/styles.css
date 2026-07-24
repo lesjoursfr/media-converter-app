@@ -153,11 +153,6 @@ button {
 
 button:hover:not(:disabled) {
   background: var(--lj-main-dark);
-  transform: translateY(-1px);
-}
-
-button:active:not(:disabled) {
-  transform: translateY(0);
 }
 
 button:disabled {

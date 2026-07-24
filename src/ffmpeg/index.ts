@@ -1,77 +1,7 @@
-export type MediaKind = "audio" | "video";
-
-export type AudioInfo = {
-  bitrateKbps: number | null;
-  channels: number | null;
-  codec: string;
-  sampleRateHz: number | null;
-};
-
-export type VideoInfo = {
-  bitrateKbps: number | null;
-  codec: string;
-  frameRate: string | null;
-  height: number;
-  width: number;
-};
-
-export type MediaInfo = {
-  audio: AudioInfo | null;
-  durationSeconds: number;
-  format: string;
-  kind: MediaKind;
-  path: string;
-  suggestedAudioBitrateKbps: number;
-  suggestedVideoBitrateKbps: number;
-  video: VideoInfo | null;
-};
-
-export type ConversionRequest = {
-  audioBitrateKbps: number;
-  inputPath: string;
-  mediaInfo: MediaInfo;
-  videoBitrateKbps: number;
-};
-
-export type ConversionJob = {
-  args: Array<string>;
-  outputPath: string;
-};
-
-export type ConversionEvent =
-  | { percent: number; type: "started" }
-  | { jobIndex: number; outputPath: string; totalJobs: number; type: "job-started" }
-  | {
-      currentJobPercent: number;
-      jobIndex: number;
-      outputPath: string;
-      percent: number;
-      totalJobs: number;
-      type: "progress";
-    }
-  | { outputPaths: Array<string>; percent: number; type: "completed" }
-  | { percent: number; type: "aborted" }
-  | { message: string; percent: number; type: "error" };
-
-export type HostOs = "macos" | "linux" | "windows" | "unknown";
-
-export type ToolBinaryName = "ffmpeg" | "ffprobe";
-
-export type ToolBinaryStatus = {
-  available: boolean;
-  error: string | null;
-  meetsMinimum: boolean;
-  name: ToolBinaryName;
-  version: string | null;
-};
-
-export type ToolingStatus = {
-  allMeetMinimum: boolean;
-  ffmpeg: ToolBinaryStatus;
-  ffprobe: ToolBinaryStatus;
-  minimumRequiredVersion: string;
-  os: HostOs;
-};
+import ffmpeg from "fluent-ffmpeg";
+import { extname } from "node:path";
+import type { ConversionRequest, MediaInfo, ToolBinaryName } from "../shared";
+import { Codecs, ffmpegWithCodec } from "./presets";
 
 export const MINIMUM_REQUIRED_TOOL_VERSION = "6.1.1";
 
@@ -101,6 +31,16 @@ type ProbeOutput = {
 
 const DEFAULT_AUDIO_BITRATE_KBPS = 256;
 const DEFAULT_VIDEO_BITRATE_KBPS = 4000;
+
+export type ConversionJob = {
+  ffmpegCommand: ffmpeg.FfmpegCommand;
+  outputPath: string;
+};
+
+export type ConversionController = {
+  aborted: boolean;
+  currentProcess: ffmpeg.FfmpegCommand | null;
+};
 
 function parseVersionParts(version: string) {
   const match = version.match(/^(?<major>\d+)\.(?<minor>\d+)(?:\.(?<patch>\d+))?$/u);
@@ -213,143 +153,6 @@ function formatFrameRate(value: string | undefined) {
   return value;
 }
 
-function replaceExtension(filePath: string, extension: string, timestamp: number): string {
-  return /\.[^./\\]+$/u.test(filePath)
-    ? filePath.replace(/\.[^./\\]+$/u, `-${timestamp}.${extension}`)
-    : `${filePath}-${timestamp}.${extension}`;
-}
-
-function createAudioOnlyArgs(audioBitrateKbps: number, format: "m4a" | "weba") {
-  if (format === "m4a") {
-    return [
-      "-vn",
-      "-f",
-      "mp4",
-      "-c:a",
-      "aac",
-      "-b:a",
-      `${audioBitrateKbps}k`,
-      "-ac",
-      "2",
-      "-aac_coder",
-      "twoloop",
-      "-profile:a",
-      "aac_low",
-      "-movflags",
-      "+faststart",
-    ];
-  }
-
-  return [
-    "-vn",
-    "-f",
-    "webm",
-    "-c:a",
-    "libopus",
-    "-b:a",
-    `${audioBitrateKbps}k`,
-    "-ac",
-    "2",
-    "-vbr",
-    "constrained",
-    "-compression_level",
-    "10",
-  ];
-}
-
-function createVideoArgs(
-  mediaInfo: MediaInfo,
-  audioBitrateKbps: number,
-  videoBitrateKbps: number,
-  format: "mp4" | "webm"
-) {
-  const args =
-    format === "mp4"
-      ? [
-          "-f",
-          "mp4",
-          "-c:v",
-          "libx264",
-          "-b:v",
-          `${videoBitrateKbps}k`,
-          "-preset",
-          "veryslow",
-          "-minrate",
-          `${Math.floor(videoBitrateKbps / 8)}k`,
-          "-maxrate",
-          `${Math.floor(videoBitrateKbps * 1.5)}k`,
-          "-force_key_frames",
-          "expr:eq(n,0)",
-          "-movflags",
-          "+faststart",
-        ]
-      : [
-          "-f",
-          "webm",
-          "-c:v",
-          "libvpx-vp9",
-          "-b:v",
-          `${videoBitrateKbps}k`,
-          "-deadline",
-          "good",
-          "-minrate",
-          `${Math.floor(videoBitrateKbps / 8)}k`,
-          "-maxrate",
-          `${Math.floor(videoBitrateKbps * 1.5)}k`,
-          "-cpu-used",
-          "0",
-          "-keyint_min",
-          "0",
-          "-g",
-          "360",
-          "-slices",
-          "4",
-          "-static-thresh",
-          "0",
-          "-qmin",
-          "0",
-          "-qmax",
-          "60",
-          "-force_key_frames",
-          "expr:eq(n,0)",
-        ];
-
-  if (mediaInfo.audio === null) {
-    args.push("-an");
-    return args;
-  }
-
-  if (format === "mp4") {
-    args.push(
-      "-c:a",
-      "aac",
-      "-b:a",
-      `${audioBitrateKbps}k`,
-      "-ac",
-      "2",
-      "-aac_coder",
-      "twoloop",
-      "-profile:a",
-      "aac_low"
-    );
-    return args;
-  }
-
-  args.push(
-    "-c:a",
-    "libopus",
-    "-b:a",
-    `${audioBitrateKbps}k`,
-    "-ac",
-    "2",
-    "-vbr",
-    "constrained",
-    "-compression_level",
-    "10"
-  );
-  return args;
-}
-
 export function parseProbeOutput(filePath: string, rawProbeOutput: string): MediaInfo {
   const parsed = JSON.parse(rawProbeOutput) as ProbeOutput;
   const streams = parsed.streams ?? [];
@@ -396,28 +199,18 @@ export function parseProbeOutput(filePath: string, rawProbeOutput: string): Medi
 
 export function buildConversionJobs(request: ConversionRequest): Array<ConversionJob> {
   const timestamp = Date.now();
+  const inputExtname = extname(request.inputPath);
 
-  if (request.mediaInfo.kind === "audio") {
-    return [
-      {
-        args: createAudioOnlyArgs(request.audioBitrateKbps, "m4a"),
-        outputPath: replaceExtension(request.inputPath, "m4a", timestamp),
-      },
-      {
-        args: createAudioOnlyArgs(request.audioBitrateKbps, "weba"),
-        outputPath: replaceExtension(request.inputPath, "weba", timestamp),
-      },
-    ];
-  }
+  const codecs = request.mediaInfo.kind === "audio" ? [Codecs.m4a, Codecs.weba] : [Codecs.mp4, Codecs.webm];
+  return codecs.map((codec) => {
+    const outputPath = request.inputPath.replace(new RegExp(`${inputExtname}$`), `-${timestamp}.${codec}`);
 
-  return [
-    {
-      args: createVideoArgs(request.mediaInfo, request.audioBitrateKbps, request.videoBitrateKbps, "mp4"),
-      outputPath: replaceExtension(request.inputPath, "mp4", timestamp),
-    },
-    {
-      args: createVideoArgs(request.mediaInfo, request.audioBitrateKbps, request.videoBitrateKbps, "webm"),
-      outputPath: replaceExtension(request.inputPath, "webm", timestamp),
-    },
-  ];
+    return {
+      ffmpegCommand: ffmpegWithCodec(ffmpeg(request.inputPath), codec, {
+        audioBitrate: request.audioBitrateKbps,
+        videoBitrate: request.videoBitrateKbps,
+      }).output(outputPath),
+      outputPath,
+    };
+  });
 }

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { ConversionEvent, ConversionRequest, HostOs, MediaInfo, ToolingStatus } from "./shared/media";
+import type { ConversionEvent, ConversionRequest, HostOs, MediaInfo, ToolingStatus } from "./shared";
 
 type HtmlElements = {
   abortButton: HTMLButtonElement;

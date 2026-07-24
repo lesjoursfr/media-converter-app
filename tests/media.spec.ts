@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  buildConversionJobs,
-  compareToolVersions,
-  extractVersionFromBanner,
-  parseProbeOutput,
-} from "../src/shared/media";
+import { buildConversionJobs, compareToolVersions, extractVersionFromBanner, parseProbeOutput } from "../src/ffmpeg";
 
 test("parseProbeOutput detects audio-only files and default outputs", () => {
   const mediaInfo = parseProbeOutput(
@@ -42,8 +37,8 @@ test("parseProbeOutput detects audio-only files and default outputs", () => {
   assert.equal(jobs.length, 2);
   assert.match(jobs[0]?.outputPath ?? "", /^\/tmp\/example-\d+\.m4a$/u);
   assert.match(jobs[1]?.outputPath ?? "", /^\/tmp\/example-\d+\.weba$/u);
-  assert.ok(jobs[0]?.args.includes("aac"));
-  assert.ok(jobs[1]?.args.includes("libopus"));
+  assert.ok(jobs[0]?.ffmpegCommand._getArguments().includes("aac"));
+  assert.ok(jobs[1]?.ffmpegCommand._getArguments().includes("libopus"));
 });
 
 test("parseProbeOutput detects video files and matching target bitrates", () => {
@@ -89,8 +84,8 @@ test("parseProbeOutput detects video files and matching target bitrates", () => 
   assert.equal(jobs.length, 2);
   assert.match(jobs[0]?.outputPath ?? "", /^\/tmp\/example-\d+\.mp4$/u);
   assert.match(jobs[1]?.outputPath ?? "", /^\/tmp\/example-\d+\.webm$/u);
-  assert.ok(jobs[0]?.args.includes("libx264"));
-  assert.ok(jobs[1]?.args.includes("libvpx-vp9"));
+  assert.ok(jobs[0]?.ffmpegCommand._getArguments().includes("libx264"));
+  assert.ok(jobs[1]?.ffmpegCommand._getArguments().includes("libvpx-vp9"));
 });
 
 test("extractVersionFromBanner parses FFmpeg and FFprobe version banners", () => {

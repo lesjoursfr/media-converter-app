@@ -1,26 +1,23 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn } from "node:child_process";
 import { join } from "node:path";
+import type { ConversionController, ConversionJob } from "./ffmpeg";
 import {
   buildConversionJobs,
   compareToolVersions,
   extractVersionFromBanner,
   MINIMUM_REQUIRED_TOOL_VERSION,
   parseProbeOutput,
-  type ConversionEvent,
-  type ConversionJob,
-  type ConversionRequest,
-  type HostOs,
-  type MediaInfo,
-  type ToolBinaryName,
-  type ToolBinaryStatus,
-  type ToolingStatus,
-} from "./shared/media";
-
-type ConversionController = {
-  aborted: boolean;
-  currentProcess: ChildProcessWithoutNullStreams | null;
-};
+} from "./ffmpeg";
+import type {
+  ConversionEvent,
+  ConversionRequest,
+  HostOs,
+  MediaInfo,
+  ToolBinaryName,
+  ToolBinaryStatus,
+  ToolingStatus,
+} from "./shared";
 
 let mainWindow: BrowserWindow | null = null;
 let currentConversion: ConversionController | null = null;
@@ -197,113 +194,42 @@ async function probeMedia(filePath: string): Promise<MediaInfo> {
   return parseProbeOutput(filePath, raw);
 }
 
-function parseProgressTime(line: string) {
-  const [key, value] = line.split("=", 2);
-
-  if (value === undefined) {
-    return null;
-  }
-
-  if (key === "out_time_us" || key === "out_time_ms") {
-    const numericValue = Number(value);
-
-    if (Number.isFinite(numericValue) && numericValue >= 0) {
-      return numericValue / 1_000_000;
-    }
-  }
-
-  if (key !== "out_time") {
-    return null;
-  }
-
-  const match = value.match(/(?<hours>\d+):(?<minutes>\d+):(?<seconds>\d+(?:\.\d+)?)/u);
-
-  if (match?.groups === undefined) {
-    return null;
-  }
-
-  const hours = Number(match.groups.hours);
-  const minutes = Number(match.groups.minutes);
-  const seconds = Number(match.groups.seconds);
-
-  if (![hours, minutes, seconds].every((part) => Number.isFinite(part))) {
-    return null;
-  }
-
-  return hours * 3600 + minutes * 60 + seconds;
-}
-
-function runFfmpegJob(
-  inputPath: string,
-  job: ConversionJob,
-  durationSeconds: number,
-  controller: ConversionController,
-  onProgress: (percent: number) => void
-) {
+function runFfmpegJob(job: ConversionJob, controller: ConversionController, onProgress: (percent: number) => void) {
   return new Promise<void>((resolve, reject) => {
-    const ffmpegProcess = spawn(
-      "ffmpeg",
-      ["-y", "-i", inputPath, ...job.args, "-progress", "pipe:1", "-nostats", job.outputPath],
-      {
-        stdio: ["ignore", "pipe", "pipe"],
-      }
-    );
-
-    controller.currentProcess = ffmpegProcess;
-    let stderr = "";
-    let buffer = "";
-
-    ffmpegProcess.stdout.on("data", (chunk) => {
-      buffer += String(chunk);
-      const lines = buffer.split(/\r?\n/u);
-      buffer = lines.pop() ?? "";
-
-      for (const line of lines) {
-        const progressTime = parseProgressTime(line);
-
-        if (progressTime !== null) {
-          const percent = Math.max(0, Math.min(100, (progressTime / durationSeconds) * 100));
-          onProgress(percent);
-          continue;
+    job.ffmpegCommand
+      .on("start", (commandLine) => {
+        console.log(`Spawn with the command ${commandLine}`);
+      })
+      .on("progress", function (progress) {
+        onProgress(progress.percent ?? 0);
+      })
+      .on("error", function (err) {
+        controller.currentProcess = null;
+        reject(err);
+      })
+      .on("end", function (_stdout, stderr) {
+        controller.currentProcess = null;
+        if (controller.aborted) {
+          reject(new Error("Conversion aborted."));
+          return;
         }
 
-        if (line === "progress=end") {
+        if (stderr === null || stderr.trim() === "") {
           onProgress(100);
+          resolve();
+          return;
         }
-      }
-    });
 
-    ffmpegProcess.stderr.on("data", (chunk) => {
-      stderr += String(chunk);
-    });
+        reject(new Error(stderr.trim() || `ffmpeg exited with an error.`));
+      })
+      .run();
 
-    ffmpegProcess.on("error", (error) => {
-      controller.currentProcess = null;
-      reject(error);
-    });
-
-    ffmpegProcess.on("close", (code) => {
-      controller.currentProcess = null;
-
-      if (controller.aborted) {
-        reject(new Error("Conversion aborted."));
-        return;
-      }
-
-      if (code === 0) {
-        onProgress(100);
-        resolve();
-        return;
-      }
-
-      reject(new Error(stderr.trim() || `ffmpeg exited with code ${code ?? "unknown"}.`));
-    });
+    controller.currentProcess = job.ffmpegCommand;
   });
 }
 
 async function runConversion(request: ConversionRequest, controller: ConversionController) {
   const jobs = buildConversionJobs(request);
-  const safeDuration = Math.max(request.mediaInfo.durationSeconds, 1);
 
   sendConversionEvent({ type: "started", percent: 0 });
 
@@ -320,7 +246,7 @@ async function runConversion(request: ConversionRequest, controller: ConversionC
         totalJobs: jobs.length,
       });
 
-      await runFfmpegJob(request.inputPath, job, safeDuration, controller, (jobPercent) => {
+      await runFfmpegJob(job, controller, (jobPercent) => {
         const percent = ((index + jobPercent / 100) / jobs.length) * 100;
 
         sendConversionEvent({
