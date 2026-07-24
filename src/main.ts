@@ -1,11 +1,78 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { join } from "node:path";
+import { extname, isAbsolute, join } from "node:path";
 import type { ConversionController, ConversionJob } from "./ffmpeg";
 import { createConversionJobs, getToolingStatus, MINIMUM_REQUIRED_TOOL_VERSION, readFileMetadata } from "./ffmpeg";
 import type { ConversionEvent, ConversionRequest, ToolingStatus } from "./shared";
 
 let mainWindow: BrowserWindow | null = null;
 let currentConversion: ConversionController | null = null;
+
+const MIN_AUDIO_BITRATE_KBPS = 32;
+const MAX_AUDIO_BITRATE_KBPS = 512;
+const MIN_VIDEO_BITRATE_KBPS = 1_024;
+const MAX_VIDEO_BITRATE_KBPS = 20_480;
+
+function isSupportedMediaPath(inputPath: string) {
+  const extension = extname(inputPath).toLowerCase();
+
+  return [
+    ".aac",
+    ".avi",
+    ".m4a",
+    ".mkv",
+    ".mov",
+    ".mp3",
+    ".mp4",
+    ".mts",
+    ".m2ts",
+    ".oga",
+    ".ogg",
+    ".wav",
+    ".weba",
+    ".webm",
+  ].includes(extension);
+}
+
+function assertConversionRequest(request: unknown): asserts request is ConversionRequest {
+  if (typeof request !== "object" || request === null) {
+    throw new Error("Invalid conversion request payload.");
+  }
+
+  const candidate = request as Partial<ConversionRequest>;
+
+  if (candidate.kind !== "audio" && candidate.kind !== "video") {
+    throw new Error("Invalid media type.");
+  }
+
+  if (typeof candidate.inputPath !== "string" || candidate.inputPath.length === 0 || !isAbsolute(candidate.inputPath)) {
+    throw new Error("Invalid input file path.");
+  }
+
+  if (!isSupportedMediaPath(candidate.inputPath)) {
+    throw new Error("Unsupported input file extension.");
+  }
+
+  if (
+    typeof candidate.audioBitrateKbps !== "number" ||
+    !Number.isFinite(candidate.audioBitrateKbps) ||
+    candidate.audioBitrateKbps < MIN_AUDIO_BITRATE_KBPS ||
+    candidate.audioBitrateKbps > MAX_AUDIO_BITRATE_KBPS
+  ) {
+    throw new Error(`Audio bitrate must be between ${MIN_AUDIO_BITRATE_KBPS} and ${MAX_AUDIO_BITRATE_KBPS} kbps.`);
+  }
+
+  if (
+    candidate.kind === "video" &&
+    (typeof candidate.videoBitrateKbps !== "number" ||
+      !Number.isFinite(candidate.videoBitrateKbps) ||
+      candidate.videoBitrateKbps < MIN_VIDEO_BITRATE_KBPS ||
+      candidate.videoBitrateKbps > MAX_VIDEO_BITRATE_KBPS)
+  ) {
+    throw new Error(
+      `Video bitrate must be between ${MIN_VIDEO_BITRATE_KBPS} and ${MAX_VIDEO_BITRATE_KBPS} kbps for video inputs.`
+    );
+  }
+}
 
 function assertToolingReady(toolingStatus: ToolingStatus) {
   if (toolingStatus.allMeetMinimum) {
@@ -179,10 +246,12 @@ ipcMain.handle("media:get-tooling-status", async () => {
   return getToolingStatus();
 });
 
-ipcMain.handle("media:start-conversion", async (_event, request: ConversionRequest) => {
+ipcMain.handle("media:start-conversion", async (_event, request: unknown) => {
   if (currentConversion !== null) {
     throw new Error("A conversion is already in progress.");
   }
+
+  assertConversionRequest(request);
 
   const toolingStatus = await getToolingStatus();
   assertToolingReady(toolingStatus);

@@ -1,4 +1,4 @@
-import type { ConversionEvent, ConversionRequest, MediaInfo, ToolingStatus } from "../shared/media";
+import type { ConversionEvent, ConversionRequest, MediaInfo, ToolingStatus } from "../shared";
 
 declare global {
   interface Window {

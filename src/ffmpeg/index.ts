@@ -230,9 +230,6 @@ function parseProbeOutput(filePath: string, metadata: ffmpeg.FfprobeData): Media
     throw new Error("The selected file does not contain an audio or a video stream.");
   }
 
-  console.log(audioStream);
-  console.log(videoStream);
-
   const audioBitrateKbps = readBitrateKbps(audioStream);
   const videoBitrateKbps = readBitrateKbps(videoStream);
 
