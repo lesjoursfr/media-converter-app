@@ -1,109 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { spawn } from "node:child_process";
 import { join } from "node:path";
 import type { ConversionController, ConversionJob } from "./ffmpeg";
-import {
-  buildConversionJobs,
-  compareToolVersions,
-  extractVersionFromBanner,
-  MINIMUM_REQUIRED_TOOL_VERSION,
-  parseProbeOutput,
-} from "./ffmpeg";
-import type {
-  ConversionEvent,
-  ConversionRequest,
-  HostOs,
-  MediaInfo,
-  ToolBinaryName,
-  ToolBinaryStatus,
-  ToolingStatus,
-} from "./shared";
+import { createConversionJobs, getToolingStatus, MINIMUM_REQUIRED_TOOL_VERSION, readFileMetadata } from "./ffmpeg";
+import type { ConversionEvent, ConversionRequest, ToolingStatus } from "./shared";
 
 let mainWindow: BrowserWindow | null = null;
 let currentConversion: ConversionController | null = null;
-
-function resolveHostOs(): HostOs {
-  if (process.platform === "darwin") {
-    return "macos";
-  }
-
-  if (process.platform === "linux") {
-    return "linux";
-  }
-
-  if (process.platform === "win32") {
-    return "windows";
-  }
-
-  return "unknown";
-}
-
-async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus> {
-  try {
-    const banner = await collectCommandOutput(name, ["-version"]);
-    const version = extractVersionFromBanner(name, banner);
-
-    if (version === null) {
-      return {
-        available: true,
-        error: `Unable to parse the ${name} version.`,
-        meetsMinimum: false,
-        name,
-        version: null,
-      };
-    }
-
-    const comparison = compareToolVersions(version, MINIMUM_REQUIRED_TOOL_VERSION);
-
-    if (comparison === null) {
-      return {
-        available: true,
-        error: `Detected an invalid ${name} version string (${version}).`,
-        meetsMinimum: false,
-        name,
-        version,
-      };
-    }
-
-    if (comparison < 0) {
-      return {
-        available: true,
-        error: `${name} ${version} is too old. Minimum required is ${MINIMUM_REQUIRED_TOOL_VERSION}.`,
-        meetsMinimum: false,
-        name,
-        version,
-      };
-    }
-
-    return {
-      available: true,
-      error: null,
-      meetsMinimum: true,
-      name,
-      version,
-    };
-  } catch (error) {
-    return {
-      available: false,
-      error: error instanceof Error ? error.message : `Unable to run ${name}.`,
-      meetsMinimum: false,
-      name,
-      version: null,
-    };
-  }
-}
-
-async function getToolingStatus(): Promise<ToolingStatus> {
-  const [ffmpeg, ffprobe] = await Promise.all([detectToolStatus("ffmpeg"), detectToolStatus("ffprobe")]);
-
-  return {
-    allMeetMinimum: ffmpeg.meetsMinimum && ffprobe.meetsMinimum,
-    ffmpeg,
-    ffprobe,
-    minimumRequiredVersion: MINIMUM_REQUIRED_TOOL_VERSION,
-    os: resolveHostOs(),
-  };
-}
 
 function assertToolingReady(toolingStatus: ToolingStatus) {
   if (toolingStatus.allMeetMinimum) {
@@ -148,52 +50,6 @@ function createWindow() {
   void mainWindow.loadFile(join(app.getAppPath(), "dist", "renderer", "index.html"));
 }
 
-function collectCommandOutput(command: string, args: Array<string>) {
-  return new Promise<string>((resolve, reject) => {
-    const process = spawn(command, args, {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    let stdout = "";
-    let stderr = "";
-
-    process.stdout.on("data", (chunk) => {
-      stdout += String(chunk);
-    });
-
-    process.stderr.on("data", (chunk) => {
-      stderr += String(chunk);
-    });
-
-    process.on("error", (error) => {
-      reject(error);
-    });
-
-    process.on("close", (code) => {
-      if (code === 0) {
-        resolve(stdout);
-        return;
-      }
-
-      reject(new Error(stderr.trim() || `${command} exited with code ${code ?? "unknown"}.`));
-    });
-  });
-}
-
-async function probeMedia(filePath: string): Promise<MediaInfo> {
-  const raw = await collectCommandOutput("ffprobe", [
-    "-v",
-    "error",
-    "-show_entries",
-    "format:stream",
-    "-of",
-    "json",
-    filePath,
-  ]);
-
-  return parseProbeOutput(filePath, raw);
-}
-
 function runFfmpegJob(job: ConversionJob, controller: ConversionController, onProgress: (percent: number) => void) {
   return new Promise<void>((resolve, reject) => {
     job.ffmpegCommand
@@ -229,7 +85,7 @@ function runFfmpegJob(job: ConversionJob, controller: ConversionController, onPr
 }
 
 async function runConversion(request: ConversionRequest, controller: ConversionController) {
-  const jobs = buildConversionJobs(request);
+  const jobs = createConversionJobs(request);
 
   sendConversionEvent({ type: "started", percent: 0 });
 
@@ -316,7 +172,7 @@ ipcMain.handle("media:select-file", async () => {
     return null;
   }
 
-  return probeMedia(result.filePaths[0]);
+  return readFileMetadata(result.filePaths[0]);
 });
 
 ipcMain.handle("media:get-tooling-status", async () => {

@@ -1,33 +1,10 @@
 import ffmpeg from "fluent-ffmpeg";
+import { spawn } from "node:child_process";
 import { extname } from "node:path";
-import type { ConversionRequest, MediaInfo, ToolBinaryName } from "../shared";
+import type { ConversionRequest, HostOs, MediaInfo, ToolBinaryName, ToolBinaryStatus, ToolingStatus } from "../shared";
 import { Codecs, ffmpegWithCodec } from "./presets";
 
 export const MINIMUM_REQUIRED_TOOL_VERSION = "6.1.1";
-
-type ProbeStream = {
-  avg_frame_rate?: string;
-  bit_rate?: string;
-  channels?: number;
-  codec_name?: string;
-  codec_type?: string;
-  height?: number;
-  r_frame_rate?: string;
-  sample_rate?: string;
-  tags?: Record<string, string | undefined>;
-  width?: number;
-};
-
-type ProbeFormat = {
-  bit_rate?: string;
-  duration?: string;
-  format_name?: string;
-};
-
-type ProbeOutput = {
-  format?: ProbeFormat;
-  streams?: Array<ProbeStream>;
-};
 
 const DEFAULT_AUDIO_BITRATE_KBPS = 256;
 const DEFAULT_VIDEO_BITRATE_KBPS = 4000;
@@ -101,6 +78,109 @@ export function extractVersionFromBanner(toolName: ToolBinaryName, output: strin
   return `${match.groups.major}.${match.groups.minor}.${match.groups.patch ?? "0"}`;
 }
 
+function resolveHostOs(): HostOs {
+  if (process.platform === "darwin") {
+    return "macos";
+  }
+
+  if (process.platform === "linux") {
+    return "linux";
+  }
+
+  if (process.platform === "win32") {
+    return "windows";
+  }
+
+  return "unknown";
+}
+
+function collectCommandOutput(command: string, args: Array<string>) {
+  return new Promise<string>((resolve, reject) => {
+    const process = spawn(command, args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    process.stdout.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+
+    process.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+
+    process.on("error", (error) => {
+      reject(error);
+    });
+
+    process.on("close", (code) => {
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+
+      reject(new Error(stderr.trim() || `${command} exited with code ${code ?? "unknown"}.`));
+    });
+  });
+}
+
+async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus> {
+  try {
+    const banner = await collectCommandOutput(name, ["-version"]);
+    const version = extractVersionFromBanner(name, banner);
+
+    if (version === null) {
+      return {
+        available: true,
+        error: `Unable to parse the ${name} version.`,
+        meetsMinimum: false,
+        name,
+        version: null,
+      };
+    }
+
+    const comparison = compareToolVersions(version, MINIMUM_REQUIRED_TOOL_VERSION);
+
+    if (comparison === null) {
+      return {
+        available: true,
+        error: `Detected an invalid ${name} version string (${version}).`,
+        meetsMinimum: false,
+        name,
+        version,
+      };
+    }
+
+    if (comparison < 0) {
+      return {
+        available: true,
+        error: `${name} ${version} is too old. Minimum required is ${MINIMUM_REQUIRED_TOOL_VERSION}.`,
+        meetsMinimum: false,
+        name,
+        version,
+      };
+    }
+
+    return {
+      available: true,
+      error: null,
+      meetsMinimum: true,
+      name,
+      version,
+    };
+  } catch (error) {
+    return {
+      available: false,
+      error: error instanceof Error ? error.message : `Unable to run ${name}.`,
+      meetsMinimum: false,
+      name,
+      version: null,
+    };
+  }
+}
+
 function parseNumber(value: number | string | null | undefined) {
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : null;
@@ -114,7 +194,9 @@ function parseNumber(value: number | string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function toKbps(bitsPerSecond: number | null) {
+function readBitrateKbps(stream: ffmpeg.FfprobeStream | undefined): number | null {
+  const bitsPerSecond = parseNumber(stream?.bit_rate);
+
   if (bitsPerSecond === null || bitsPerSecond <= 0) {
     return null;
   }
@@ -122,22 +204,7 @@ function toKbps(bitsPerSecond: number | null) {
   return Math.max(1, Math.round(bitsPerSecond / 1000));
 }
 
-function readBitrateKbps(stream: ProbeStream | undefined, fallbackBps?: number | null) {
-  const values = [stream?.bit_rate, stream?.tags?.BPS, fallbackBps];
-
-  for (const value of values) {
-    const parsed = parseNumber(value);
-    const kbps = toKbps(parsed);
-
-    if (kbps !== null) {
-      return kbps;
-    }
-  }
-
-  return null;
-}
-
-function formatFrameRate(value: string | undefined) {
+function formatFrameRate(value: string | undefined): string | null {
   if (value === undefined || value.length === 0 || value === "0/0") {
     return null;
   }
@@ -153,11 +220,9 @@ function formatFrameRate(value: string | undefined) {
   return value;
 }
 
-export function parseProbeOutput(filePath: string, rawProbeOutput: string): MediaInfo {
-  const parsed = JSON.parse(rawProbeOutput) as ProbeOutput;
-  const streams = parsed.streams ?? [];
-  const format = parsed.format;
-  const formatBitRate = parseNumber(format?.bit_rate);
+function parseProbeOutput(filePath: string, metadata: ffmpeg.FfprobeData): MediaInfo {
+  const streams = metadata.streams ?? [];
+  const format = metadata.format;
   const audioStream = streams.find((stream) => stream.codec_type === "audio");
   const videoStream = streams.find((stream) => stream.codec_type === "video");
 
@@ -165,8 +230,11 @@ export function parseProbeOutput(filePath: string, rawProbeOutput: string): Medi
     throw new Error("The selected file does not contain an audio or a video stream.");
   }
 
-  const audioBitrateKbps = readBitrateKbps(audioStream, formatBitRate);
-  const videoBitrateKbps = readBitrateKbps(videoStream, formatBitRate);
+  console.log(audioStream);
+  console.log(videoStream);
+
+  const audioBitrateKbps = readBitrateKbps(audioStream);
+  const videoBitrateKbps = readBitrateKbps(videoStream);
 
   return {
     audio:
@@ -197,11 +265,40 @@ export function parseProbeOutput(filePath: string, rawProbeOutput: string): Medi
   };
 }
 
-export function buildConversionJobs(request: ConversionRequest): Array<ConversionJob> {
+export async function getToolingStatus(): Promise<ToolingStatus> {
+  const [ffmpeg, ffprobe] = await Promise.all([detectToolStatus("ffmpeg"), detectToolStatus("ffprobe")]);
+
+  return {
+    allMeetMinimum: ffmpeg.meetsMinimum && ffprobe.meetsMinimum,
+    ffmpeg,
+    ffprobe,
+    minimumRequiredVersion: MINIMUM_REQUIRED_TOOL_VERSION,
+    os: resolveHostOs(),
+  };
+}
+
+export function readFileMetadata(filePath: string): Promise<MediaInfo> {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      try {
+        resolve(parseProbeOutput(filePath, metadata));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  });
+}
+
+export function createConversionJobs(request: ConversionRequest): Array<ConversionJob> {
   const timestamp = Date.now();
   const inputExtname = extname(request.inputPath);
 
-  const codecs = request.mediaInfo.kind === "audio" ? [Codecs.m4a, Codecs.weba] : [Codecs.mp4, Codecs.webm];
+  const codecs = request.kind === "audio" ? [Codecs.m4a, Codecs.weba] : [Codecs.mp4, Codecs.webm];
   return codecs.map((codec) => {
     const outputPath = request.inputPath.replace(new RegExp(`${inputExtname}$`), `-${timestamp}.${codec}`);
 

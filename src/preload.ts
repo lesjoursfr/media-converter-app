@@ -287,7 +287,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const request: ConversionRequest = {
       audioBitrateKbps: readBitrate(elements.audioBitrateInput, selectedMediaInfo.suggestedAudioBitrateKbps),
       inputPath: selectedMediaInfo.path,
-      mediaInfo: selectedMediaInfo,
+      kind: selectedMediaInfo.kind,
       videoBitrateKbps:
         selectedMediaInfo.kind === "video"
           ? readBitrate(elements.videoBitrateInput, selectedMediaInfo.suggestedVideoBitrateKbps)

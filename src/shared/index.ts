@@ -29,7 +29,7 @@ export type MediaInfo = {
 export type ConversionRequest = {
   audioBitrateKbps: number;
   inputPath: string;
-  mediaInfo: MediaInfo;
+  kind: MediaKind;
   videoBitrateKbps: number;
 };
 
