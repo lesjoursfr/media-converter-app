@@ -5,6 +5,7 @@
 :root {
   --lj-main: #c83e2c;
   --lj-main-dark: #b03525;
+  --lj-main-light: #f1c5c0;
   --lj-text: #414141;
   --lj-title: #1a1a1a;
   --lj-border: #d7d7d7;
@@ -60,6 +61,7 @@ body {
   box-shadow: var(--lj-shadow);
   padding: 22px;
   margin-bottom: 18px;
+  overflow: hidden;
 }
 
 .panel::before {
@@ -69,9 +71,7 @@ body {
   left: 0;
   width: 100%;
   height: 6px;
-  background: var(--lj-main);
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
+  background: var(--lj-main-light);
 }
 
 .panel h2 {
