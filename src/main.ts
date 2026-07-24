@@ -128,22 +128,19 @@ function runFfmpegJob(job: ConversionJob, controller: ConversionController, onPr
       })
       .on("error", function (err) {
         controller.currentProcess = null;
-        reject(err);
-      })
-      .on("end", function (_stdout, stderr) {
-        controller.currentProcess = null;
+
         if (controller.aborted) {
           reject(new Error("Conversion aborted."));
           return;
         }
 
-        if (stderr === null || stderr.trim() === "") {
-          onProgress(100);
-          resolve();
-          return;
-        }
-
-        reject(new Error(stderr.trim() || `ffmpeg exited with an error.`));
+        reject(err);
+      })
+      .on("end", function () {
+        controller.currentProcess = null;
+        onProgress(100);
+        resolve();
+        return;
       })
       .run();
 
