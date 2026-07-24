@@ -28,7 +28,7 @@ export default tseslint.config(
       "prettier.config.mjs",
       "node_modules/*",
       ".yarn/*",
-      "bin/*",
+      "dist/*",
     ],
   },
   {
