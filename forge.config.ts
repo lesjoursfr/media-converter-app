@@ -1,7 +1,7 @@
 import { MakerDeb } from "@electron-forge/maker-deb";
+import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
-import { MakerZIP } from "@electron-forge/maker-zip";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
@@ -20,16 +20,42 @@ const config: ForgeConfig = {
   makers: [
     new MakerSquirrel(
       {
-        authors: "Electron contributors",
+        title: "Les Jours - Media Converter",
+        authors: "Les Jours SAS",
         iconUrl:
           "https://raw.githubusercontent.com/lesjoursfr/media-converter-app/refs/heads/main/src/icons/windows/icon.ico",
         setupIcon: "src/icons/windows/icon.ico",
       },
       ["win32"]
     ),
-    new MakerZIP({}, ["darwin"]),
-    new MakerDeb({ options: { icon: "src/icons/linux/icons/512x512.png" } }, ["linux"]),
-    new MakerRpm({ options: { icon: "src/icons/linux/icons/512x512.png" } }, ["linux"]),
+    new MakerDMG(
+      {
+        title: "Les Jours - Media Converter",
+        icon: "src/icons/macos/icon.icns",
+        format: "ULFO",
+        overwrite: true,
+      },
+      ["darwin"]
+    ),
+    new MakerDeb(
+      {
+        options: {
+          name: "Les Jours - Media Converter",
+          maintainer: "Les Jours SAS",
+          icon: "src/icons/linux/icons/512x512.png",
+        },
+      },
+      ["linux"]
+    ),
+    new MakerRpm(
+      {
+        options: {
+          name: "Les Jours - Media Converter",
+          icon: "src/icons/linux/icons/512x512.png",
+        },
+      },
+      ["linux"]
+    ),
   ],
   plugins: [
     {

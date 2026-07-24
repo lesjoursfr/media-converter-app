@@ -36,12 +36,15 @@
 		"package": "npm run build && electron-forge package",
 		"make": "npm run build && electron-forge make"
 	},
+	"dependencies": {
+		"fluent-ffmpeg": "2.1.3"
+	},
 	"devDependencies": {
 		"@electron-forge/cli": "7.11.2",
 		"@electron-forge/maker-deb": "7.11.2",
+		"@electron-forge/maker-dmg": "7.11.2",
 		"@electron-forge/maker-rpm": "7.11.2",
 		"@electron-forge/maker-squirrel": "7.11.2",
-		"@electron-forge/maker-zip": "7.11.2",
 		"@electron-forge/plugin-auto-unpack-natives": "7.11.2",
 		"@electron-forge/plugin-fuses": "7.11.2",
 		"@electron/fuses": "2.1.3",
@@ -57,7 +60,6 @@
 		"electron-squirrel-startup": "1.0.1",
 		"eslint": "10.7.0",
 		"eslint-config-prettier": "10.1.8",
-		"fluent-ffmpeg": "2.1.3",
 		"globals": "17.7.0",
 		"mocha": "11.7.6",
 		"prettier": "3.9.5",
@@ -67,6 +69,12 @@
 	},
 	"dependenciesMeta": {
 		"electron-winstaller": {
+			"built": true
+		},
+		"fs-xattr": {
+			"built": true
+		},
+		"macos-alias": {
 			"built": true
 		}
 	},
