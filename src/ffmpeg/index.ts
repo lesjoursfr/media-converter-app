@@ -121,7 +121,7 @@ function collectCommandOutput(command: string, args: Array<string>) {
         return;
       }
 
-      reject(new Error(stderr.trim() || `${command} exited with code ${code ?? "unknown"}.`));
+      reject(new Error(stderr.trim() || `${command} s’est terminé avec le code ${code ?? "inconnu"}.`));
     });
   });
 }
@@ -134,7 +134,7 @@ async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus>
     if (version === null) {
       return {
         available: true,
-        error: `Unable to parse the ${name} version.`,
+        error: `Impossible d’analyser la version de ${name}.`,
         meetsMinimum: false,
         name,
         version: null,
@@ -146,7 +146,7 @@ async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus>
     if (comparison === null) {
       return {
         available: true,
-        error: `Detected an invalid ${name} version string (${version}).`,
+        error: `Chaîne de version ${name} invalide détectée (${version}).`,
         meetsMinimum: false,
         name,
         version,
@@ -156,7 +156,7 @@ async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus>
     if (comparison < 0) {
       return {
         available: true,
-        error: `${name} ${version} is too old. Minimum required is ${MINIMUM_REQUIRED_TOOL_VERSION}.`,
+        error: `${name} ${version} est trop ancien. La version minimale requise est ${MINIMUM_REQUIRED_TOOL_VERSION}.`,
         meetsMinimum: false,
         name,
         version,
@@ -173,7 +173,7 @@ async function detectToolStatus(name: ToolBinaryName): Promise<ToolBinaryStatus>
   } catch (error) {
     return {
       available: false,
-      error: error instanceof Error ? error.message : `Unable to run ${name}.`,
+      error: error instanceof Error ? error.message : `Impossible d’exécuter ${name}.`,
       meetsMinimum: false,
       name,
       version: null,
@@ -227,7 +227,7 @@ function parseProbeOutput(filePath: string, metadata: ffmpeg.FfprobeData): Media
   const videoStream = streams.find((stream) => stream.codec_type === "video");
 
   if (audioStream === undefined && videoStream === undefined) {
-    throw new Error("The selected file does not contain an audio or a video stream.");
+    throw new Error("Le fichier sélectionné ne contient ni flux audio ni flux vidéo.");
   }
 
   const audioBitrateKbps = readBitrateKbps(audioStream);
@@ -240,11 +240,11 @@ function parseProbeOutput(filePath: string, metadata: ffmpeg.FfprobeData): Media
         : {
             bitrateKbps: audioBitrateKbps,
             channels: audioStream.channels ?? null,
-            codec: audioStream.codec_name ?? "unknown",
+            codec: audioStream.codec_name ?? "inconnu",
             sampleRateHz: parseNumber(audioStream.sample_rate),
           },
     durationSeconds: Math.max(parseNumber(format?.duration) ?? 0, 0),
-    format: format?.format_name ?? "unknown",
+    format: format?.format_name ?? "inconnu",
     kind: videoStream === undefined ? "audio" : "video",
     path: filePath,
     suggestedAudioBitrateKbps: audioBitrateKbps ?? DEFAULT_AUDIO_BITRATE_KBPS,
@@ -254,7 +254,7 @@ function parseProbeOutput(filePath: string, metadata: ffmpeg.FfprobeData): Media
         ? null
         : {
             bitrateKbps: videoBitrateKbps,
-            codec: videoStream.codec_name ?? "unknown",
+            codec: videoStream.codec_name ?? "inconnu",
             frameRate: formatFrameRate(videoStream.avg_frame_rate ?? videoStream.r_frame_rate),
             height: videoStream.height ?? 0,
             width: videoStream.width ?? 0,

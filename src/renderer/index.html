@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -7,74 +7,76 @@
       content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Media converter</title>
+    <title>Convertisseur multimédia</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <main class="layout">
       <h1 class="app-title">
         <img src="../icons/icon.png" alt="" class="app-title-icon" aria-hidden="true" />
-        <span>Media converter</span>
+        <span>Convertisseur multimédia</span>
       </h1>
 
       <section class="panel">
         <div class="tooling-panel-title">
-          <h2>FFmpeg tools</h2>
+          <h2>Outils FFmpeg</h2>
           <div class="tooling-actions">
             <button id="refresh-tooling-button" type="button">⟳</button>
           </div>
         </div>
         <ul id="tooling-status-list">
-          <li>Checking installed versions…</li>
+          <li>Vérification des versions installées…</li>
         </ul>
-        <p id="tooling-error" hidden>FFmpeg and FFprobe are required.</p>
-        <button id="tooling-help-link" type="button" class="link-button" hidden>See installation instructions</button>
+        <p id="tooling-error" hidden>FFmpeg et FFprobe sont requis.</p>
+        <button id="tooling-help-link" type="button" class="link-button" hidden>
+          Voir les instructions d’installation
+        </button>
       </section>
 
       <section class="panel">
-        <button id="select-file-button" type="button">Select a media file</button>
-        <p id="selected-file-path">No file selected.</p>
+        <button id="select-file-button" type="button">Sélectionner un fichier multimédia</button>
+        <p id="selected-file-path">Aucun fichier sélectionné.</p>
       </section>
 
       <section class="panel">
-        <h2>Detected codecs</h2>
+        <h2>Codecs détectés</h2>
         <ul id="media-details">
-          <li>Select a file to inspect its audio and video codecs.</li>
+          <li>Sélectionnez un fichier pour inspecter ses codecs audio et vidéo.</li>
         </ul>
       </section>
 
       <section class="panel">
-        <h2>Target bitrates</h2>
+        <h2>Débits cibles</h2>
         <div class="field-grid">
           <label>
-            Audio bitrate (kbps)
+            Débit audio (kb/s)
             <input id="audio-bitrate" type="number" min="32" max="512" step="1" disabled />
           </label>
           <label>
-            Video bitrate (kbps)
+            Débit vidéo (kb/s)
             <input id="video-bitrate" type="number" min="1024" max="20480" step="1" disabled />
           </label>
         </div>
 
         <div class="actions">
-          <button id="start-conversion-button" type="button" disabled>Start conversion</button>
-          <button id="abort-conversion-button" type="button" disabled>Abort conversion</button>
+          <button id="start-conversion-button" type="button" disabled>Lancer la conversion</button>
+          <button id="abort-conversion-button" type="button" disabled>Annuler la conversion</button>
         </div>
       </section>
 
       <section class="panel">
-        <h2>Conversion progress</h2>
+        <h2>Progression de la conversion</h2>
         <progress id="conversion-progress" max="100" value="0"></progress>
-        <p id="conversion-status">Waiting for a file.</p>
+        <p id="conversion-status">En attente d’un fichier.</p>
         <ul id="conversion-outputs"></ul>
       </section>
     </main>
 
     <dialog id="tooling-help-dialog">
       <article class="dialog-content">
-        <h2 id="tooling-help-title">Install FFmpeg and FFprobe</h2>
+        <h2 id="tooling-help-title">Installer FFmpeg et FFprobe</h2>
         <pre id="tooling-help-content"></pre>
-        <button id="close-tooling-help-button" type="button">Close</button>
+        <button id="close-tooling-help-button" type="button">Fermer</button>
       </article>
     </dialog>
   </body>

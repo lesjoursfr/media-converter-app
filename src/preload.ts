@@ -71,16 +71,16 @@ function getElements(): HtmlElements {
 
 function renderMediaInfo(elements: HtmlElements, mediaInfo: MediaInfo, toolingReady: boolean) {
   const entries = [
-    `Container: ${mediaInfo.format}`,
-    `Duration: ${mediaInfo.durationSeconds.toFixed(1)} seconds`,
+    `Conteneur : ${mediaInfo.format}`,
+    `Durée : ${mediaInfo.durationSeconds.toFixed(1)} secondes`,
     mediaInfo.audio === null
-      ? "Audio: no audio track"
-      : `Audio: ${mediaInfo.audio.codec} @ ${mediaInfo.audio.bitrateKbps ?? "unknown"} kbps${mediaInfo.audio.sampleRateHz === null ? "" : `, ${mediaInfo.audio.sampleRateHz} Hz`}${
-          mediaInfo.audio.channels === null ? "" : `, ${mediaInfo.audio.channels} channel(s)`
+      ? "Audio : aucune piste audio"
+      : `Audio : ${mediaInfo.audio.codec} @ ${mediaInfo.audio.bitrateKbps ?? "inconnu"} kb/s${mediaInfo.audio.sampleRateHz === null ? "" : `, ${mediaInfo.audio.sampleRateHz} Hz`}${
+          mediaInfo.audio.channels === null ? "" : `, ${mediaInfo.audio.channels} canal(aux)`
         }`,
     mediaInfo.video === null
-      ? "Video: no video track"
-      : `Video: ${mediaInfo.video.codec} @ ${mediaInfo.video.bitrateKbps ?? "unknown"} kbps, ${mediaInfo.video.width}x${mediaInfo.video.height}${
+      ? "Vidéo : aucune piste vidéo"
+      : `Vidéo : ${mediaInfo.video.codec} @ ${mediaInfo.video.bitrateKbps ?? "inconnu"} kb/s, ${mediaInfo.video.width}x${mediaInfo.video.height}${
           mediaInfo.video.frameRate === null ? "" : `, ${mediaInfo.video.frameRate}`
         }`,
   ];
@@ -99,7 +99,7 @@ function renderMediaInfo(elements: HtmlElements, mediaInfo: MediaInfo, toolingRe
   elements.videoBitrateInput.disabled = mediaInfo.kind !== "video";
   elements.videoBitrateInput.value = String(mediaInfo.kind === "video" ? mediaInfo.suggestedVideoBitrateKbps : 0);
   elements.startButton.disabled = !toolingReady;
-  elements.status.textContent = "Ready to convert.";
+  elements.status.textContent = "Prêt à convertir.";
   elements.progressBar.value = 0;
   setOutputs(elements.conversionOutputs, []);
 }
@@ -108,46 +108,46 @@ function getToolingHelp(os: HostOs, minimumVersion: string) {
   if (os === "macos") {
     return {
       content: [
-        "Install Homebrew if needed:",
+        "Installez Homebrew si nécessaire :",
         '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
         "",
-        "Install FFmpeg (includes ffprobe):",
+        "Installez FFmpeg (inclut ffprobe) :",
         "brew install ffmpeg",
         "",
-        "Verify versions:",
+        "Vérifiez les versions :",
         "ffmpeg -version",
         "ffprobe -version",
       ].join("\n"),
-      title: `Install FFmpeg and FFprobe on macOS (minimum ${minimumVersion})`,
+      title: `Installer FFmpeg et FFprobe sur macOS (minimum ${minimumVersion})`,
     };
   }
 
   if (os === "linux") {
     return {
       content: [
-        "Install with your package manager:",
+        "Installez FFmpeg avec votre gestionnaire de paquets :",
         "Debian/Ubuntu: sudo apt update && sudo apt install ffmpeg",
         "Fedora/RHEL: sudo dnf install ffmpeg",
         "Arch Linux: sudo pacman -S ffmpeg",
         "",
-        "Verify versions:",
+        "Vérifiez les versions :",
         "ffmpeg -version",
         "ffprobe -version",
       ].join("\n"),
-      title: `Install FFmpeg and FFprobe on Linux (minimum ${minimumVersion})`,
+      title: `Installer FFmpeg et FFprobe sur Linux (minimum ${minimumVersion})`,
     };
   }
 
   return {
     content: [
-      "Install FFmpeg using your system package manager or official build:",
+      "Installez FFmpeg via le gestionnaire de paquets de votre système ou une version officielle :",
       "https://ffmpeg.org/download.html",
       "",
-      "Verify versions:",
+      "Vérifiez les versions :",
       "ffmpeg -version",
       "ffprobe -version",
     ].join("\n"),
-    title: `Install FFmpeg and FFprobe (minimum ${minimumVersion})`,
+    title: `Installer FFmpeg et FFprobe (minimum ${minimumVersion})`,
   };
 }
 
@@ -158,11 +158,11 @@ function renderToolingStatus(elements: HtmlElements, toolingStatus: ToolingStatu
     const item = document.createElement("li");
 
     if (!tool.available) {
-      item.textContent = `${tool.name}: missing`;
+      item.textContent = `${tool.name} : manquant`;
     } else if (!tool.meetsMinimum) {
-      item.textContent = `${tool.name}: ${tool.version ?? "unknown"} (requires ${toolingStatus.minimumRequiredVersion}+ )`;
+      item.textContent = `${tool.name} : ${tool.version ?? "inconnue"} (requiert ${toolingStatus.minimumRequiredVersion}+ )`;
     } else {
-      item.textContent = `${tool.name}: ${tool.version} (ok)`;
+      item.textContent = `${tool.name} : ${tool.version} (ok)`;
     }
 
     elements.toolingStatusList.append(item);
@@ -176,7 +176,7 @@ function renderToolingStatus(elements: HtmlElements, toolingStatus: ToolingStatu
 
   elements.toolingError.hidden = false;
   elements.toolingHelpLink.hidden = false;
-  elements.toolingError.textContent = `FFmpeg and FFprobe ${toolingStatus.minimumRequiredVersion}+ are required. `;
+  elements.toolingError.textContent = `FFmpeg et FFprobe ${toolingStatus.minimumRequiredVersion}+ sont requis. `;
 
   const help = getToolingHelp(toolingStatus.os, toolingStatus.minimumRequiredVersion);
   elements.toolingHelpTitle.textContent = help.title;
@@ -202,7 +202,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const refreshToolingStatus = async () => {
     elements.refreshToolingButton.disabled = true;
-    elements.status.textContent = "Checking FFmpeg and FFprobe versions…";
+    elements.status.textContent = "Vérification des versions de FFmpeg et FFprobe…";
 
     try {
       toolingStatus = await api.getToolingStatus();
@@ -211,14 +211,16 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!isToolingReady()) {
         elements.startButton.disabled = true;
         elements.selectButton.disabled = true;
-        elements.status.textContent = `Install FFmpeg and FFprobe ${toolingStatus.minimumRequiredVersion}+ to continue.`;
+        elements.status.textContent = `Installez FFmpeg et FFprobe ${toolingStatus.minimumRequiredVersion}+ pour continuer.`;
         return;
       }
 
       elements.selectButton.disabled = false;
       elements.startButton.disabled = selectedMediaInfo === null;
       elements.status.textContent =
-        selectedMediaInfo === null ? "FFmpeg and FFprobe are ready. Select a file." : "FFmpeg and FFprobe are ready.";
+        selectedMediaInfo === null
+          ? "FFmpeg et FFprobe sont prêts. Sélectionnez un fichier."
+          : "FFmpeg et FFprobe sont prêts.";
     } finally {
       elements.refreshToolingButton.disabled = false;
     }
@@ -232,9 +234,9 @@ window.addEventListener("DOMContentLoaded", () => {
     elements.toolingStatusList.replaceChildren();
 
     const item = document.createElement("li");
-    item.textContent = "Unable to detect FFmpeg and FFprobe.";
+    item.textContent = "Impossible de détecter FFmpeg et FFprobe.";
     elements.toolingStatusList.append(item);
-    elements.status.textContent = error instanceof Error ? error.message : "Unable to detect FFmpeg and FFprobe.";
+    elements.status.textContent = error instanceof Error ? error.message : "Impossible de détecter FFmpeg et FFprobe.";
   });
 
   elements.toolingHelpLink.addEventListener("click", () => {
@@ -247,36 +249,39 @@ window.addEventListener("DOMContentLoaded", () => {
 
   elements.refreshToolingButton.addEventListener("click", () => {
     void refreshToolingStatus().catch((error) => {
-      elements.status.textContent = error instanceof Error ? error.message : "Unable to detect FFmpeg and FFprobe.";
+      elements.status.textContent =
+        error instanceof Error ? error.message : "Impossible de détecter FFmpeg et FFprobe.";
     });
   });
 
   elements.selectButton.addEventListener("click", async () => {
     if (!isToolingReady()) {
-      elements.status.textContent = "Install FFmpeg and FFprobe before selecting a file.";
+      elements.status.textContent = "Installez FFmpeg et FFprobe avant de sélectionner un fichier.";
       return;
     }
 
-    elements.status.textContent = "Inspecting file…";
+    elements.status.textContent = "Inspection du fichier…";
 
     try {
       const mediaInfo = await api.selectFile();
 
       if (mediaInfo === null) {
-        elements.status.textContent = selectedMediaInfo === null ? "Waiting for a file." : "File selection canceled.";
+        elements.status.textContent =
+          selectedMediaInfo === null ? "En attente d’un fichier." : "Sélection de fichier annulée.";
         return;
       }
 
       selectedMediaInfo = mediaInfo;
       renderMediaInfo(elements, mediaInfo, isToolingReady());
     } catch (error) {
-      elements.status.textContent = error instanceof Error ? error.message : "Unable to inspect the selected file.";
+      elements.status.textContent =
+        error instanceof Error ? error.message : "Impossible d’inspecter le fichier sélectionné.";
     }
   });
 
   elements.startButton.addEventListener("click", async () => {
     if (!isToolingReady()) {
-      elements.status.textContent = "Install FFmpeg and FFprobe before starting a conversion.";
+      elements.status.textContent = "Installez FFmpeg et FFprobe avant de lancer une conversion.";
       return;
     }
 
@@ -298,14 +303,14 @@ window.addEventListener("DOMContentLoaded", () => {
     elements.abortButton.disabled = false;
     elements.progressBar.value = 0;
     setOutputs(elements.conversionOutputs, []);
-    elements.status.textContent = "Starting conversion…";
+    elements.status.textContent = "Démarrage de la conversion…";
 
     try {
       await api.startConversion(request);
     } catch (error) {
       elements.startButton.disabled = false;
       elements.abortButton.disabled = true;
-      elements.status.textContent = error instanceof Error ? error.message : "Unable to start the conversion.";
+      elements.status.textContent = error instanceof Error ? error.message : "Impossible de lancer la conversion.";
     }
   });
 
@@ -317,27 +322,27 @@ window.addEventListener("DOMContentLoaded", () => {
     switch (event.type) {
       case "started":
         elements.progressBar.value = 0;
-        elements.status.textContent = "Conversion started.";
+        elements.status.textContent = "Conversion démarrée.";
         return;
       case "job-started":
-        elements.status.textContent = `Encoding output ${event.jobIndex + 1} of ${event.totalJobs}: ${event.outputPath}`;
+        elements.status.textContent = `Encodage de la sortie ${event.jobIndex + 1} sur ${event.totalJobs} : ${event.outputPath}`;
         return;
       case "progress":
         elements.progressBar.value = event.percent;
-        elements.status.textContent = `Converting… ${event.percent.toFixed(1)}% complete`;
+        elements.status.textContent = `Conversion… ${event.percent.toFixed(1)} % terminée`;
         return;
       case "completed":
         elements.progressBar.value = 100;
         elements.startButton.disabled = false;
         elements.abortButton.disabled = true;
-        elements.status.textContent = "Conversion completed.";
+        elements.status.textContent = "Conversion terminée.";
         setOutputs(elements.conversionOutputs, event.outputPaths);
         return;
       case "aborted":
         elements.progressBar.value = 0;
         elements.startButton.disabled = false;
         elements.abortButton.disabled = true;
-        elements.status.textContent = "Conversion aborted.";
+        elements.status.textContent = "Conversion annulée.";
         return;
       case "error":
         elements.progressBar.value = 0;

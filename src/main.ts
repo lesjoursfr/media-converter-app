@@ -35,21 +35,21 @@ function isSupportedMediaPath(inputPath: string) {
 
 function assertConversionRequest(request: unknown): asserts request is ConversionRequest {
   if (typeof request !== "object" || request === null) {
-    throw new Error("Invalid conversion request payload.");
+    throw new Error("Charge utile de conversion invalide.");
   }
 
   const candidate = request as Partial<ConversionRequest>;
 
   if (candidate.kind !== "audio" && candidate.kind !== "video") {
-    throw new Error("Invalid media type.");
+    throw new Error("Type de média invalide.");
   }
 
   if (typeof candidate.inputPath !== "string" || candidate.inputPath.length === 0 || !isAbsolute(candidate.inputPath)) {
-    throw new Error("Invalid input file path.");
+    throw new Error("Chemin du fichier source invalide.");
   }
 
   if (!isSupportedMediaPath(candidate.inputPath)) {
-    throw new Error("Unsupported input file extension.");
+    throw new Error("Extension du fichier source non prise en charge.");
   }
 
   if (
@@ -58,7 +58,9 @@ function assertConversionRequest(request: unknown): asserts request is Conversio
     candidate.audioBitrateKbps < MIN_AUDIO_BITRATE_KBPS ||
     candidate.audioBitrateKbps > MAX_AUDIO_BITRATE_KBPS
   ) {
-    throw new Error(`Audio bitrate must be between ${MIN_AUDIO_BITRATE_KBPS} and ${MAX_AUDIO_BITRATE_KBPS} kbps.`);
+    throw new Error(
+      `Le débit audio doit être compris entre ${MIN_AUDIO_BITRATE_KBPS} et ${MAX_AUDIO_BITRATE_KBPS} kb/s.`
+    );
   }
 
   if (
@@ -69,7 +71,7 @@ function assertConversionRequest(request: unknown): asserts request is Conversio
       candidate.videoBitrateKbps > MAX_VIDEO_BITRATE_KBPS)
   ) {
     throw new Error(
-      `Video bitrate must be between ${MIN_VIDEO_BITRATE_KBPS} and ${MAX_VIDEO_BITRATE_KBPS} kbps for video inputs.`
+      `Le débit vidéo doit être compris entre ${MIN_VIDEO_BITRATE_KBPS} et ${MAX_VIDEO_BITRATE_KBPS} kb/s pour les entrées vidéo.`
     );
   }
 }
@@ -81,11 +83,11 @@ function assertToolingReady(toolingStatus: ToolingStatus) {
 
   const issues = [toolingStatus.ffmpeg, toolingStatus.ffprobe]
     .filter((tool) => !tool.meetsMinimum)
-    .map((tool) => `${tool.name}: ${tool.error ?? "not available"}`)
+    .map((tool) => `${tool.name} : ${tool.error ?? "non disponible"}`)
     .join("; ");
 
   throw new Error(
-    `FFmpeg and FFprobe ${MINIMUM_REQUIRED_TOOL_VERSION}+ are required before converting files. ${issues}`
+    `FFmpeg et FFprobe ${MINIMUM_REQUIRED_TOOL_VERSION}+ sont requis avant de convertir des fichiers. ${issues}`
   );
 }
 
@@ -130,7 +132,7 @@ function runFfmpegJob(job: ConversionJob, controller: ConversionController, onPr
         controller.currentProcess = null;
 
         if (controller.aborted) {
-          reject(new Error("Conversion aborted."));
+          reject(new Error("Conversion annulée."));
           return;
         }
 
@@ -156,7 +158,7 @@ async function runConversion(request: ConversionRequest, controller: ConversionC
   try {
     for (const [index, job] of jobs.entries()) {
       if (controller.aborted) {
-        throw new Error("Conversion aborted.");
+        throw new Error("Conversion annulée.");
       }
 
       sendConversionEvent({
@@ -194,7 +196,7 @@ async function runConversion(request: ConversionRequest, controller: ConversionC
     sendConversionEvent({
       type: "error",
       percent: 0,
-      message: error instanceof Error ? error.message : "Unknown conversion error.",
+      message: error instanceof Error ? error.message : "Erreur de conversion inconnue.",
     });
   }
 }
@@ -211,7 +213,7 @@ ipcMain.handle("media:select-file", async () => {
     properties: ["openFile"],
     filters: [
       {
-        name: "Media files",
+        name: "Fichiers multimédia",
         extensions: [
           "aac",
           "avi",
@@ -245,7 +247,7 @@ ipcMain.handle("media:get-tooling-status", async () => {
 
 ipcMain.handle("media:start-conversion", async (_event, request: unknown) => {
   if (currentConversion !== null) {
-    throw new Error("A conversion is already in progress.");
+    throw new Error("Une conversion est déjà en cours.");
   }
 
   assertConversionRequest(request);
