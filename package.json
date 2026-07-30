@@ -1,6 +1,6 @@
 {
 	"name": "media-converter-app",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"private": true,
 	"description": "Electron application to convert audio & video files with ffmpeg",
 	"keywords": [
