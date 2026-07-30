@@ -120,6 +120,8 @@ function getToolingHelp(os: HostOs, minimumVersion: string) {
         "Installez Homebrew si nécessaire :",
         '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
         "",
+        "À la fin de l’installation, ajoutez Homebrew à votre PATH en suivant les instructions affichées par le script d’installation.",
+        "",
         "Installez FFmpeg (inclut ffprobe) :",
         "brew install ffmpeg",
         "",
