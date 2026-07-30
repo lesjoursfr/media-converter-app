@@ -32,6 +32,20 @@ test("createConversionJobs creates video conversion jobs", () => {
   assert.ok(jobs[1]?.ffmpegCommand._getArguments().includes("libvpx-vp9"));
 });
 
+test("createConversionJobs can disable audio tracks for video outputs", () => {
+  const jobs = createConversionJobs({
+    audioBitrateKbps: 128,
+    inputPath: "/tmp/example.mov",
+    kind: "video",
+    noAudio: true,
+    videoBitrateKbps: 4000,
+  });
+
+  assert.equal(jobs.length, 2);
+  assert.ok(jobs[0]?.ffmpegCommand._getArguments().includes("-an"));
+  assert.ok(jobs[1]?.ffmpegCommand._getArguments().includes("-an"));
+});
+
 test("extractVersionFromBanner parses FFmpeg and FFprobe version banners", () => {
   const ffmpegVersion = extractVersionFromBanner(
     "ffmpeg",

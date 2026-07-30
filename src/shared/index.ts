@@ -30,6 +30,7 @@ export type ConversionRequest = {
   audioBitrateKbps: number;
   inputPath: string;
   kind: MediaKind;
+  noAudio?: boolean;
   videoBitrateKbps: number;
 };
 

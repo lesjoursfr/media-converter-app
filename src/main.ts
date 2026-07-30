@@ -92,6 +92,14 @@ function assertConversionRequest(request: unknown): asserts request is Conversio
       `Le débit vidéo doit être compris entre ${MIN_VIDEO_BITRATE_KBPS} et ${MAX_VIDEO_BITRATE_KBPS} kb/s pour les entrées vidéo.`
     );
   }
+
+  if (candidate.noAudio !== undefined && typeof candidate.noAudio !== "boolean") {
+    throw new Error("L’option de désactivation audio est invalide.");
+  }
+
+  if (candidate.kind === "audio" && candidate.noAudio === true) {
+    throw new Error("L’option de désactivation audio ne s’applique pas aux entrées audio.");
+  }
 }
 
 function assertToolingReady(toolingStatus: ToolingStatus) {

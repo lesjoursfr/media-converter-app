@@ -302,6 +302,7 @@ export function createConversionJobs(request: ConversionRequest): Array<Conversi
     return {
       ffmpegCommand: ffmpegWithCodec(ffmpeg(request.inputPath), codec, {
         audioBitrate: request.audioBitrateKbps,
+        noAudio: request.noAudio,
         videoBitrate: request.videoBitrateKbps,
       }).output(outputPath),
       outputPath,

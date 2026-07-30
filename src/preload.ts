@@ -11,6 +11,7 @@ type HtmlElements = {
   environmentDebugContent: HTMLElement;
   environmentDebugDialog: HTMLDialogElement;
   filePath: HTMLParagraphElement;
+  noAudioInput: HTMLInputElement;
   progressBar: HTMLProgressElement;
   refreshToolingButton: HTMLButtonElement;
   selectButton: HTMLButtonElement;
@@ -62,6 +63,7 @@ function getElements(): HtmlElements {
     environmentDebugContent: document.querySelector("#environment-debug-content") as HTMLElement,
     environmentDebugDialog: document.querySelector("#environment-debug-dialog") as HTMLDialogElement,
     filePath: document.querySelector("#selected-file-path") as HTMLParagraphElement,
+    noAudioInput: document.querySelector("#no-audio") as HTMLInputElement,
     progressBar: document.querySelector("#conversion-progress") as HTMLProgressElement,
     refreshToolingButton: document.querySelector("#refresh-tooling-button") as HTMLButtonElement,
     selectButton: document.querySelector("#select-file-button") as HTMLButtonElement,
@@ -105,6 +107,8 @@ function renderMediaInfo(elements: HtmlElements, mediaInfo: MediaInfo, toolingRe
   elements.filePath.textContent = mediaInfo.path;
   elements.audioBitrateInput.disabled = false;
   elements.audioBitrateInput.value = String(mediaInfo.suggestedAudioBitrateKbps);
+  elements.noAudioInput.disabled = mediaInfo.kind !== "video";
+  elements.noAudioInput.checked = false;
   elements.videoBitrateInput.disabled = mediaInfo.kind !== "video";
   elements.videoBitrateInput.value = String(mediaInfo.kind === "video" ? mediaInfo.suggestedVideoBitrateKbps : 0);
   elements.startButton.disabled = !toolingReady;
@@ -333,6 +337,7 @@ window.addEventListener("DOMContentLoaded", () => {
       audioBitrateKbps: readBitrate(elements.audioBitrateInput, selectedMediaInfo.suggestedAudioBitrateKbps),
       inputPath: selectedMediaInfo.path,
       kind: selectedMediaInfo.kind,
+      noAudio: selectedMediaInfo.kind === "video" ? elements.noAudioInput.checked : undefined,
       videoBitrateKbps:
         selectedMediaInfo.kind === "video"
           ? readBitrate(elements.videoBitrateInput, selectedMediaInfo.suggestedVideoBitrateKbps)
