@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { extname, isAbsolute, join } from "node:path";
+import { delimiter, extname, isAbsolute, join } from "node:path";
 import type { ConversionController, ConversionJob } from "./ffmpeg";
 import { createConversionJobs, getToolingStatus, MINIMUM_REQUIRED_TOOL_VERSION, readFileMetadata } from "./ffmpeg";
 import type { ConversionEvent, ConversionRequest, ToolingStatus } from "./shared";
@@ -11,6 +11,24 @@ const MIN_AUDIO_BITRATE_KBPS = 32;
 const MAX_AUDIO_BITRATE_KBPS = 512;
 const MIN_VIDEO_BITRATE_KBPS = 1_024;
 const MAX_VIDEO_BITRATE_KBPS = 20_480;
+
+function ensureMacOsHomebrewPathsInEnvironment() {
+  if (process.platform !== "darwin") {
+    return;
+  }
+
+  const requiredPaths = ["/opt/homebrew/bin", "/opt/homebrew/sbin"];
+  const currentPath = process.env.PATH ?? "";
+  const pathParts = currentPath.split(delimiter).filter((value) => value.length > 0);
+  const existingPaths = new Set(pathParts);
+  const missingPaths = requiredPaths.filter((value) => !existingPaths.has(value));
+
+  if (missingPaths.length === 0) {
+    return;
+  }
+
+  process.env.PATH = [...missingPaths, ...pathParts].join(delimiter);
+}
 
 function isSupportedMediaPath(inputPath: string) {
   const extension = extname(inputPath).toLowerCase();
@@ -200,6 +218,8 @@ async function runConversion(request: ConversionRequest, controller: ConversionC
     });
   }
 }
+
+ensureMacOsHomebrewPathsInEnvironment();
 
 ipcMain.handle("media:select-file", async () => {
   if (mainWindow === null) {
