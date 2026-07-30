@@ -16,3 +16,6 @@ node_modules/
 
 # Electron Forge
 out/
+
+# OS generated files
+.DS_Store

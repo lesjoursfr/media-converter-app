@@ -22,6 +22,12 @@ Electron application to convert audio and video files with ffmpeg.
 ## Development
 
 ```bash
-npm install
-npm start
+yarn
+npm run start
+```
+
+## Build
+
+```bash
+npm run make
 ```

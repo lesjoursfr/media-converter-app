@@ -6,9 +6,12 @@ import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
+const title = "Les Jours - Media Converter";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    name: title,
     icon:
       process.platform === "win32"
         ? "src/icons/windows/icon.ico"
@@ -20,7 +23,8 @@ const config: ForgeConfig = {
   makers: [
     new MakerSquirrel(
       {
-        title: "Les Jours - Media Converter",
+        title: title,
+        name: title,
         authors: "Les Jours SAS",
         iconUrl:
           "https://raw.githubusercontent.com/lesjoursfr/media-converter-app/refs/heads/main/src/icons/windows/icon.ico",
@@ -30,7 +34,8 @@ const config: ForgeConfig = {
     ),
     new MakerDMG(
       {
-        title: "Les Jours - Media Converter",
+        title: title,
+        name: title,
         icon: "src/icons/macos/icon.icns",
         format: "ULFO",
         overwrite: true,
@@ -40,7 +45,7 @@ const config: ForgeConfig = {
     new MakerDeb(
       {
         options: {
-          name: "Les Jours - Media Converter",
+          name: title,
           maintainer: "Les Jours SAS",
           icon: "src/icons/linux/icons/512x512.png",
         },
@@ -50,7 +55,7 @@ const config: ForgeConfig = {
     new MakerRpm(
       {
         options: {
-          name: "Les Jours - Media Converter",
+          name: title,
           icon: "src/icons/linux/icons/512x512.png",
         },
       },
