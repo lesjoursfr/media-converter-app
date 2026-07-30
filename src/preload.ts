@@ -258,7 +258,9 @@ window.addEventListener("DOMContentLoaded", () => {
     elements.status.textContent = error instanceof Error ? error.message : "Impossible de détecter FFmpeg et FFprobe.";
   });
 
-  elements.toolingHelpLink.addEventListener("click", () => {
+  elements.toolingHelpLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     elements.toolingHelpDialog.showModal();
   });
 
