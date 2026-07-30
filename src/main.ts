@@ -245,6 +245,14 @@ ipcMain.handle("media:get-tooling-status", async () => {
   return getToolingStatus();
 });
 
+ipcMain.handle("media:get-environment-variables", async () => {
+  const entries = Object.entries(process.env)
+    .filter(([, value]) => typeof value === "string")
+    .sort(([left], [right]) => left.localeCompare(right));
+
+  return Object.fromEntries(entries) as Record<string, string>;
+});
+
 ipcMain.handle("media:start-conversion", async (_event, request: unknown) => {
   if (currentConversion !== null) {
     throw new Error("Une conversion est déjà en cours.");

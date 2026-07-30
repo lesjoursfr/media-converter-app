@@ -4,13 +4,17 @@ import type { ConversionEvent, ConversionRequest, HostOs, MediaInfo, ToolingStat
 type HtmlElements = {
   abortButton: HTMLButtonElement;
   audioBitrateInput: HTMLInputElement;
+  closeEnvironmentDebugButton: HTMLButtonElement;
   closeToolingHelpButton: HTMLButtonElement;
   conversionOutputs: HTMLUListElement;
   detailsList: HTMLUListElement;
+  environmentDebugContent: HTMLElement;
+  environmentDebugDialog: HTMLDialogElement;
   filePath: HTMLParagraphElement;
   progressBar: HTMLProgressElement;
   refreshToolingButton: HTMLButtonElement;
   selectButton: HTMLButtonElement;
+  showEnvironmentButton: HTMLButtonElement;
   startButton: HTMLButtonElement;
   status: HTMLParagraphElement;
   toolingError: HTMLParagraphElement;
@@ -24,6 +28,7 @@ type HtmlElements = {
 
 const api = {
   cancelConversion: () => ipcRenderer.invoke("media:cancel-conversion"),
+  getEnvironmentVariables: (): Promise<Record<string, string>> => ipcRenderer.invoke("media:get-environment-variables"),
   getToolingStatus: (): Promise<ToolingStatus> => ipcRenderer.invoke("media:get-tooling-status"),
   onConversionEvent: (listener: (event: ConversionEvent) => void) => {
     ipcRenderer.on("media:conversion-event", (_event, payload: ConversionEvent) => {
@@ -50,13 +55,17 @@ function getElements(): HtmlElements {
   return {
     abortButton: document.querySelector("#abort-conversion-button") as HTMLButtonElement,
     audioBitrateInput: document.querySelector("#audio-bitrate") as HTMLInputElement,
+    closeEnvironmentDebugButton: document.querySelector("#close-environment-debug-button") as HTMLButtonElement,
     closeToolingHelpButton: document.querySelector("#close-tooling-help-button") as HTMLButtonElement,
     conversionOutputs: document.querySelector("#conversion-outputs") as HTMLUListElement,
     detailsList: document.querySelector("#media-details") as HTMLUListElement,
+    environmentDebugContent: document.querySelector("#environment-debug-content") as HTMLElement,
+    environmentDebugDialog: document.querySelector("#environment-debug-dialog") as HTMLDialogElement,
     filePath: document.querySelector("#selected-file-path") as HTMLParagraphElement,
     progressBar: document.querySelector("#conversion-progress") as HTMLProgressElement,
     refreshToolingButton: document.querySelector("#refresh-tooling-button") as HTMLButtonElement,
     selectButton: document.querySelector("#select-file-button") as HTMLButtonElement,
+    showEnvironmentButton: document.querySelector("#show-environment-button") as HTMLButtonElement,
     startButton: document.querySelector("#start-conversion-button") as HTMLButtonElement,
     status: document.querySelector("#conversion-status") as HTMLParagraphElement,
     toolingError: document.querySelector("#tooling-error") as HTMLParagraphElement,
@@ -193,6 +202,14 @@ function readBitrate(input: HTMLInputElement, fallback: number) {
   return numericValue;
 }
 
+function formatEnvironmentVariables(envVariables: Record<string, string>) {
+  const lines = Object.entries(envVariables)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value}`);
+
+  return lines.length === 0 ? "Aucune variable d'environnement disponible." : lines.join("\n");
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   const elements = getElements();
   let selectedMediaInfo: MediaInfo | null = null;
@@ -245,6 +262,25 @@ window.addEventListener("DOMContentLoaded", () => {
 
   elements.closeToolingHelpButton.addEventListener("click", () => {
     elements.toolingHelpDialog.close();
+  });
+
+  elements.showEnvironmentButton.addEventListener("click", async () => {
+    elements.environmentDebugContent.textContent = "Chargement…";
+    elements.environmentDebugDialog.showModal();
+
+    try {
+      const environmentVariables = await api.getEnvironmentVariables();
+      elements.environmentDebugContent.textContent = formatEnvironmentVariables(environmentVariables);
+    } catch (error) {
+      elements.environmentDebugContent.textContent =
+        error instanceof Error
+          ? `Impossible de charger les variables d'environnement : ${error.message}`
+          : "Impossible de charger les variables d'environnement.";
+    }
+  });
+
+  elements.closeEnvironmentDebugButton.addEventListener("click", () => {
+    elements.environmentDebugDialog.close();
   });
 
   elements.refreshToolingButton.addEventListener("click", () => {

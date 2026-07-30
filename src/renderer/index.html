@@ -21,7 +21,22 @@
         <div class="tooling-panel-title">
           <h2>Outils FFmpeg</h2>
           <div class="tooling-actions">
-            <button id="refresh-tooling-button" type="button">⟳</button>
+            <button id="refresh-tooling-button" type="button">
+              <svg role="img" viewBox="0 0 512 512" width="22" height="22">
+                <path
+                  fill="currentColor"
+                  d="M480,232V47.539l-65.524,69.893A211.432,211.432,0,0,0,254.259,44.185C137.464,44.185,42.444,139.2,42.444,256s95.02,211.815,211.815,211.815A210.623,210.623,0,0,0,402.5,407.3l-33.6-34.283a162.89,162.89,0,0,1-114.645,46.8c-90.328,0-163.815-73.487-163.815-163.815S163.931,92.185,254.259,92.185A163.567,163.567,0,0,1,381.411,152.7L307.068,232Z"
+                ></path>
+              </svg>
+            </button>
+            <button id="show-environment-button" type="button">
+              <svg role="img" viewBox="0 0 512 512" width="22" height="22">
+                <path
+                  fill="currentColor"
+                  d="M416,229.1l80.006-17.876-.027-91.235-48,.014.015,52.765L395.977,184.4,352,184.4V156.358a96.543,96.543,0,0,0-15.353-52.391l39.692-39.923h39.515v-48h-59.48L301.517,71.222A96.563,96.563,0,0,0,255,59.358h0a96.57,96.57,0,0,0-45.558,11.349L155.483,15.991l-59.5.053.042,48,39.4-.035,38.521,39.061A96.538,96.538,0,0,0,158,156.358v28.073l-41.4.006L64,172.788V120.034H16V211.32l80,17.719,0,58.961H16v48H96.017a160.581,160.581,0,0,0,6.855,46.116L16,405.633V496H64V442.367l59.985-16.239a159.414,159.414,0,0,0,110.983,68.217V264h42V494.26a160.607,160.607,0,0,0,110.993-68.247L448,442.344V496h48V405.656l-86.846-23.622A159.022,159.022,0,0,0,415.993,336H496V288H416Z"
+                ></path>
+              </svg>
+            </button>
           </div>
         </div>
         <ul id="tooling-status-list">
@@ -77,6 +92,14 @@
         <h2 id="tooling-help-title">Installer FFmpeg et FFprobe</h2>
         <pre id="tooling-help-content"></pre>
         <button id="close-tooling-help-button" type="button">Fermer</button>
+      </article>
+    </dialog>
+
+    <dialog id="environment-debug-dialog">
+      <article class="dialog-content">
+        <h2>Variables d'environnement</h2>
+        <pre id="environment-debug-content">Chargement…</pre>
+        <button id="close-environment-debug-button" type="button">Fermer</button>
       </article>
     </dialog>
   </body>

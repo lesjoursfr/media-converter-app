@@ -196,6 +196,22 @@ ul {
   margin: 0;
 }
 
+.tooling-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#refresh-tooling-button,
+#show-environment-button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 #select-file-button,
 #start-conversion-button,
 #abort-conversion-button {
@@ -256,6 +272,16 @@ ul {
   overflow-x: auto;
   padding: 12px;
   white-space: pre-wrap;
+}
+
+#environment-debug-content {
+  background: var(--lj-soft);
+  border: 1px solid var(--lj-border);
+  border-radius: 4px;
+  max-height: 52vh;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre;
 }
 
 @media (max-width: 640px) {

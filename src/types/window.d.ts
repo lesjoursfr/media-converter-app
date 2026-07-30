@@ -4,6 +4,7 @@ declare global {
   interface Window {
     mediaConverter: {
       cancelConversion(): Promise<{ canceled: boolean }>;
+      getEnvironmentVariables(): Promise<Record<string, string>>;
       getToolingStatus(): Promise<ToolingStatus>;
       onConversionEvent(listener: (event: ConversionEvent) => void): void;
       selectFile(): Promise<MediaInfo | null>;
