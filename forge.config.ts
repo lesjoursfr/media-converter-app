@@ -24,7 +24,7 @@ const config: ForgeConfig = {
     new MakerSquirrel(
       {
         title: title,
-        name: title,
+        name: "LesJoursMediaConverter",
         authors: "Les Jours SAS",
         iconUrl:
           "https://raw.githubusercontent.com/lesjoursfr/media-converter-app/refs/heads/main/src/icons/windows/icon.ico",
