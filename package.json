@@ -78,8 +78,5 @@
 			"built": true
 		}
 	},
-	"resolutions": {
-		"extract-zip": "npm:@electron-internal/extract-zip@1.0.5"
-	},
 	"packageManager": "yarn@4.18.1"
 }
