@@ -53,19 +53,19 @@
 		"@types/electron-squirrel-startup": "1.0.2",
 		"@types/fluent-ffmpeg": "2.1.28",
 		"@types/mocha": "10.0.10",
-		"@types/node": "24.13.3",
+		"@types/node": "24.19.0",
 		"@types/progress": "2.0.7",
 		"@types/yargs": "17.0.35",
-		"electron": "43.5.0",
+		"electron": "43.7.7",
 		"electron-squirrel-startup": "1.0.1",
-		"eslint": "10.9.1",
+		"eslint": "10.11.0",
 		"eslint-config-prettier": "10.1.8",
-		"globals": "17.11.0",
+		"globals": "17.13.0",
 		"mocha": "11.8.0",
-		"prettier": "3.9.6",
+		"prettier": "3.9.9",
 		"ts-node": "10.9.2",
 		"typescript": "6.0.3",
-		"typescript-eslint": "8.68.0"
+		"typescript-eslint": "8.71.0"
 	},
 	"dependenciesMeta": {
 		"electron-winstaller": {
@@ -81,5 +81,5 @@
 	"resolutions": {
 		"extract-zip": "npm:@electron-internal/extract-zip@1.0.5"
 	},
-	"packageManager": "yarn@4.18.0"
+	"packageManager": "yarn@4.18.1"
 }
